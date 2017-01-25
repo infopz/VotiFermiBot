@@ -347,7 +347,7 @@ def vediMod(bot, shared):
 
 @bot.before_processing
 def processM(chat, message, shared):
-  print("@"+message.sender.username+" "+message.text)
+  print("@"+message.sender.username)
   s=shared['user']
   scU = shared['cUs']
   if chat.id != scU.chat_id and not shared['load']:
