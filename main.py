@@ -24,7 +24,6 @@ class utente:
     self.nome = nome
     self.userF = ""
     self.passF = ""
-    self.lastV = voto()
     self.voti = list()
     self.statusLogin=0
   
@@ -34,7 +33,7 @@ class utente:
   def setPass(self, p):
     self.passF = p
 
-  def aggiornaVoti(self, chat, data=True, Lv=False):
+  def aggiornaVoti(self):
     user = b64decode(self.userF).decode('ascii')
     user = user[0:-4]
     pw = b64decode(self.passF).decode('ascii')
@@ -42,8 +41,6 @@ class utente:
     s = requests.Session()
     s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
     r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati1Q.php')
-    if not data:
-      r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudente1Q.php')
     soup = BeautifulSoup(r.text, "html.parser")
     table = soup.find("table", {"class": "TabellaVoti"})
     self.voti=list()
@@ -55,8 +52,27 @@ class utente:
           self.voti.append(vot)
       except Exception:
         continue
-    if Lv: #opzione per aggiornare anche l'ultimo voto
-      self.lastV = self.voti[0]
+
+  def votiPerMateria(self):
+    user = b64decode(self.userF).decode('ascii')
+    user = user[0:-4]
+    pw = b64decode(self.passF).decode('ascii')
+    payload = {'ob_user': user, 'ob_password': pw}
+    s = requests.Session()
+    s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
+    r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudente1Q.php')
+    soup = BeautifulSoup(r.text, "html.parser")
+    table = soup.find("table", {"class": "TabellaVoti"})
+    voti=list()
+    for row in table.find_all('tr'):
+      col = row.find_all('td')
+      try:
+        if col[1].text[0].isdigit():
+          vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
+          voti.append(vot)
+      except Exception:
+        continue
+    return voti
 
   def findMedie(self):
     user = b64decode(self.userF).decode('ascii')
@@ -89,36 +105,8 @@ class utente:
         pass
     return med
 
-  def checkNewVote(self):
-    return not (self.lastV == self.voti[0])
-
-  def printNewVotes(self):
-    msg=''
-    for i in self.voti:
-      if not (self.lastV == i):
-        msg+=i.v+' - '+i.materia+'\n'
-      else:
-        break
-    self.lastV = self.voti[0]
-    return msg
-
   def printVoti(self, spaceForMat=False):
     msg="Ecco i tuoi Voti\n"
-    """for i in self.voti:
-      sp = "    "
-      sp2="  "
-      if float(i.v)%1 != 0: 
-        sp=" "
-      if float(i.v) == 10:
-        sp="  "
-      if len(i.materia) == 3:
-        if i.materia == 'TPS':
-          pass
-        else:
-          sp2="     "
-      elif len(i.materia) == 5:
-        sp2=" "
-      msg+=str(i.v)+sp+"- "+i.materia+sp2+"- "+i.tipo+"\n"""
     mat = ''
     for i in self.voti:
       if i.materia != mat and spaceForMat:
@@ -200,10 +188,16 @@ def RiduciNome(m):
   return m
 
 
-
-
-
-
+def seeDiff(a, b): #algoritmo per cercare nuovi voti
+  v = list()
+  ai=0
+  if len(a)!=len(b):
+    for i in range(0, len(b)):
+      if not a[ai]==b[i]:
+        v.append(b[i])
+      else:
+        ai+=1
+  return v
 
 
 
@@ -227,7 +221,7 @@ def hellocomm(chat, message, shared):
 @bot.command('vote')
 def voteCommand(chat, message, shared):
   scU=shared['cUs']
-  scU.aggiornaVoti(chat, True, True)
+  scU.aggiornaVoti()
   bot.api.call("sendMessage", {"chat_id": scU.chat_id, "text": scU.printVoti(), "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
   #chat.send(s.printVoti())
   shared['cUs']=scU
@@ -254,7 +248,7 @@ def chanceCommand(chat, message, shared, args):
   s.setPass(pw)
   if s.checkLogin():
     bot.api.call("sendMessage", {"chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
-    s.aggiornaVoti(chat, True, True)
+    s.aggiornaVoti()
     s.statusLogin=0
   else:
     chat.send('Dati di login non corretti')
@@ -265,12 +259,21 @@ def chanceCommand(chat, message, shared, args):
 
 @bot.command('timer')
 def timerCommand(chat, message, shared, bot):
-  vediMod(bot, shared)
+  if message.sender.username=='infopz':
+    vediMod(bot, shared)
+  else:
+    chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
 
 def votiMateria(chat, message, shared):
   scU=shared['cUs']
-  scU.aggiornaVoti(chat, False, False)
-  msg=scU.printVoti(True)
+  voti = scU.votiPerMateria()
+  msg="Ecco i tuoi Voti\n"
+  mat = ''
+  for i in voti:
+    if i.materia != mat:
+      msg+='\n'
+    mat=i.materia
+    msg+=RiduciNome(i.materia).upper()+" - "+i.tipo+" - *"+i.v+'*\n'
   bot.api.call("sendMessage", {"chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
 
 def medieCommand(chat, message, shared):
@@ -301,7 +304,7 @@ def start2(chat, message, shared):
   s.setPass(pw)
   if s.checkLogin():
     bot.api.call("sendMessage", {"chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
-    s.aggiornaVoti(True, True)
+    s.aggiornaVoti()
     s.statusLogin=0
   else:
     chat.send('Dati di login non corretti')
@@ -342,14 +345,17 @@ def vediMod(bot, shared):
   s = shared['user']
   for i in range(0, len(s)):
     try:
-      s[i].aggiornaVoti(Lv=False)
-      if s[i].checkNewVote():
+      vOld=s[i].voti
+      s[i].aggiornaVoti()
+      newVote=seeDiff(vOld, s[i].voti)
+      if newVote:
         print('NewVotesFound '+s[i].nome)
-        nv="Ehi, "+s[i].nome+", hai dei nuovi voti sul registro:\n"+s[i].printNewVotes()
+        nv="Ehi, "+s[i].nome+", hai dei nuovi voti sul registro:\n"
+        for j in newVote:
+          nv+=j.v+' - '+j.materia+'\n'
         bot.chat(s[i].chat_id).send(nv)
-        s[i].aggiornaVoti(LV=True)
     except Exception as e:
-        pass
+        continue
   shared['user']=s
   if not shared['firstTimer']:
     saveDati(shared)
