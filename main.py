@@ -34,7 +34,7 @@ class utente:
   def setPass(self, p):
     self.passF = p
 
-  def aggiornaVoti(self, data=True, Lv=False):
+  def aggiornaVoti(self, chat, data=True, Lv=False):
     user = b64decode(self.userF).decode('ascii')
     user = user[0:-4]
     pw = b64decode(self.passF).decode('ascii')
@@ -102,7 +102,7 @@ class utente:
     self.lastV = self.voti[0]
     return msg
 
-  def printVoti(self):
+  def printVoti(self, spaceForMat=False):
     msg="Ecco i tuoi Voti\n"
     """for i in self.voti:
       sp = "    "
@@ -119,7 +119,11 @@ class utente:
       elif len(i.materia) == 5:
         sp2=" "
       msg+=str(i.v)+sp+"- "+i.materia+sp2+"- "+i.tipo+"\n"""
+    mat = ''
     for i in self.voti:
+      if i.materia != mat and spaceForMat:
+        msg+='\n'
+      mat=i.materia
       msg+=RiduciNome(i.materia).upper()+" - "+i.tipo+" - *"+i.v+'*\n'
     return msg
 
@@ -215,7 +219,7 @@ def hellocomm(chat, message, shared):
     bot.api.call("sendMessage", {"chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
     scU.statusLogin=0
   else:
-    chat.send("Benvenuto "+scU.nome+"\nNel caso troverò un nuovo voto sul registro ti invierò un messaggio\n\nNel caso il login fallisse ridai il comando /start\n\nI tuoi dati sono al sicuro! Username e Password vengono criptati appena li inserisci\n\nNel caso qualche materia non venisse abbreviata contattatemi\n\nBot progettato da Giovanni Casari (@infopz)")
+    chat.send("Benvenuto "+scU.nome+"\nDa ora in poi quando troverò un nuovo voto sul registro ti invierò un messaggio\n\nSe il login dovesse fallire ridai il comando /start\n\nI tuoi dati sono al sicuro! Username e Password vengono criptati appena li inserisci\n\nNel caso qualche materia non venisse abbreviata contattami\n\nBot progettato da Giovanni Casari (@infopz)")
     chat.send("Inserisci il tuo username del registro:")
     scU.statusLogin = 1
   shared['cUs']=scU
@@ -223,7 +227,7 @@ def hellocomm(chat, message, shared):
 @bot.command('vote')
 def voteCommand(chat, message, shared):
   scU=shared['cUs']
-  scU.aggiornaVoti(True, True)
+  scU.aggiornaVoti(chat, True, True)
   bot.api.call("sendMessage", {"chat_id": scU.chat_id, "text": scU.printVoti(), "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
   #chat.send(s.printVoti())
   shared['cUs']=scU
@@ -250,18 +254,23 @@ def chanceCommand(chat, message, shared, args):
   s.setPass(pw)
   if s.checkLogin():
     bot.api.call("sendMessage", {"chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
-    s.aggiornaVoti(True, True)
+    s.aggiornaVoti(chat, True, True)
     s.statusLogin=0
   else:
     chat.send('Dati di login non corretti')
     chat.send('Immetti il tuo username')
     s.statusLogin=1
   shared['cUs']=s
+  saveDati(shared)
+
+@bot.command('timer')
+def timerCommand(chat, message, shared, bot):
+  vediMod(bot, shared)
 
 def votiMateria(chat, message, shared):
   scU=shared['cUs']
-  scU.aggiornaVoti(False, False)
-  msg=scU.printVoti()
+  scU.aggiornaVoti(chat, False, False)
+  msg=scU.printVoti(True)
   bot.api.call("sendMessage", {"chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
 
 def medieCommand(chat, message, shared):
@@ -269,7 +278,7 @@ def medieCommand(chat, message, shared):
   m=scU.findMedie()
   msg=""
   for i in m:
-    msg+=RiduciNome(i.materia[1:])+" - "+i.tipo+" "+i.v+'\n'
+    msg+=RiduciNome(i.materia[1:])+" - "+i.tipo+" - *"+i.v+'*\n'
   bot.api.call("sendMessage", {"chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown", "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'})
 
 def prDataAll(s, scU):
@@ -299,6 +308,7 @@ def start2(chat, message, shared):
     chat.send('Immetti il tuo username')
     s.statusLogin=1
   shared['cUs']=s
+  saveDati(shared)
   
 
 def saveDati(shared):
@@ -326,7 +336,7 @@ def loadDati(shared):
   shared['user']=s
   shared['load']=True
 
-@bot.timer(300)
+@bot.timer(900)
 def vediMod(bot, shared):
   print('Timer')
   s = shared['user']
@@ -347,7 +357,7 @@ def vediMod(bot, shared):
 
 @bot.before_processing
 def processM(chat, message, shared):
-  print("@"+message.sender.username)
+  print("Message from: @"+message.sender.first_name)
   s=shared['user']
   scU = shared['cUs']
   if chat.id != scU.chat_id and not shared['load']:
@@ -372,6 +382,7 @@ def processM(chat, message, shared):
     if newUser:
       nU=utente(chat.id, message.sender.first_name)
       print('NewUser: '+nU.nome)
+      s.append(nU)
       scU=nU
   elif shared['load']:
     for i in s:
