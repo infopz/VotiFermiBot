@@ -163,16 +163,16 @@ nomiridotti = {
 }
 
 
-def seeDiff(a, b):  # algoritmo per cercare nuovi voti
-    v = list()
-    ai = 0
-    if len(a) != len(b):
-        for i in range(0, len(b)):
-            if not a[ai] == b[i]:
-                v.append(b[i])
+def seeDiff(listaa, listab):  # algoritmo per cercare nuovi voti
+    nuovivoti = list()
+    contatore = 0
+    if len(listaa) != len(listab):
+        for voto in listab:
+            if listaa[contatore] != voto:
+                nuovivoti.append(voto)
             else:
-                ai += 1
-    return v
+                contatore += 1
+    return nuovivoti
 
 
 bot = botogram.create(apikey.botKey)
@@ -289,7 +289,7 @@ def prDataAll(s, scU):
 def start1(chat, message, shared):
     s = shared['cUs']
     msg = message.text + 'aaaa'
-    us = b64encode(msg.encode('ascii')).decode('ascii')  # cripto il nome utente non appena viene immessa
+    us = b64encode(msg.encode('ascii')).decode('ascii')  # TODO: pls no
     s.setuser(us)
     s.statusLogin = 2
     shared['cUs'] = s
@@ -298,7 +298,7 @@ def start1(chat, message, shared):
 
 def start2(chat, message, shared):
     s = shared['cUs']
-    pw = b64encode(message.text.encode('ascii')).decode('ascii')  # cripto la password non appena viene immessa
+    pw = b64encode(message.text.encode('ascii')).decode('ascii')  # TODO: pls no anche qui
     s.setpass(pw)
     if s.checklogin():
         bot.api.call("sendMessage", {
@@ -345,28 +345,28 @@ def loadDati(bot, shared):
 @bot.timer(900)
 def vediMod(bot, shared):
     print('Timer')
-    s = shared['user']
+    utenti = shared['user']
     scU = shared['cUs']
     if not shared['firstTimer']:
-        for i in range(0, len(s)):
-            if s[i].chat_id == scU.chat_id:
-                s[i] = scU
+        for i in range(0, len(utenti)):
+            if utenti[i].chat_id == scU.chat_id:
+                utenti[i] = scU
                 break
-    for i in range(0, len(s)):
-        vOld = list()
+    for i in range(0, len(utenti)):
+        votivecchi = list()
         try:
-            vOld = s[i].voti
-            s[i].aggiornavoti()
-            newVote = seeDiff(vOld, s[i].voti)
-            if newVote:
-                print('NewVotesFound ' + s[i].nome)
-                nv = "Ehi, " + s[i].nome + ", hai dei nuovi voti sul registro:\n"
-                for j in newVote:
-                    nv += "Hai preso *" + j.v + '* in ' + j.materia + " " + j.tipo + '\n'
-                bot.chat(s[i].chat_id).send(nv)
+            votivecchi = utenti[i].voti
+            utenti[i].aggiornavoti()
+            nuovivoti = seeDiff(votivecchi, utenti[i].voti)
+            if len(nuovivoti) > 0:
+                print('NewVotesFound ' + utenti[i].nome)
+                msg = "Ehi, " + utenti[i].nome + ", hai dei nuovi voti sul registro:\n"
+                for voto in nuovivoti:
+                    msg += "Hai preso *" + voto.v + '* in ' + voto.materia + " " + voto.tipo + '\n'
+                bot.chat(utenti[i].chat_id).send(msg)
         except Exception as e:
-            continue
-    shared['user'] = s
+            pass
+    shared['user'] = utenti
     if not shared['firstTimer']:
         scU.aggiornavoti()
     shared['cUs'] = scU
