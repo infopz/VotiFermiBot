@@ -202,7 +202,6 @@ def seeDiff(a, b): #algoritmo per cercare nuovi voti
 
 
 
-
 bot = botogram.create(apikey.botKey)
 
 @bot.command('start')
@@ -343,20 +342,29 @@ def loadDati(shared):
 def vediMod(bot, shared):
   print('Timer')
   s = shared['user']
+  scU = shared['cUs']
   for i in range(0, len(s)):
+    if s[i].chat_id==scU.chat_id:
+      s[i]=scU
+      break
+  for i in range(0, len(s)):
+    vOld = list()
     try:
       vOld=s[i].voti
       s[i].aggiornaVoti()
+      s[i].voti[i]=s[i].voti[i]
       newVote=seeDiff(vOld, s[i].voti)
       if newVote:
         print('NewVotesFound '+s[i].nome)
         nv="Ehi, "+s[i].nome+", hai dei nuovi voti sul registro:\n"
         for j in newVote:
-          nv+=j.v+' - '+j.materia+'\n'
+          nv+="Hai preso *"+j.v+'* in '+j.materia+" "+j.tipo+'\n'
         bot.chat(s[i].chat_id).send(nv)
     except Exception as e:
         continue
   shared['user']=s
+  scU.aggiornaVoti()
+  shared['cUs']=scU
   if not shared['firstTimer']:
     saveDati(shared)
   shared['firstTimer']=False
