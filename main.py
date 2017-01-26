@@ -227,9 +227,9 @@ def voteCommand(chat, message, shared):
   saveDati(shared)
 
 @bot.command('load')
-def loadCommand(chat, message, shared):
+def loadCommand(chat, message, shared, bot):
   if message.sender.username=='infopz':
-    loadDati(shared)
+    loadDati(bot, shared)
     s=shared['user']
     for i in s:
       print("Load: "+i.nome)
@@ -329,7 +329,7 @@ def saveDati(shared):
   shared['user']=s
   shared['cUs']=scU
 
-def loadDati(shared):
+def loadDati(bot, shared):
   s=shared['user']
   scU=shared['cUs']
   f=open('user.txt', 'rb')
@@ -343,16 +343,16 @@ def vediMod(bot, shared):
   print('Timer')
   s = shared['user']
   scU = shared['cUs']
-  for i in range(0, len(s)):
-    if s[i].chat_id==scU.chat_id:
-      s[i]=scU
-      break
+  if not shared['firstTimer']:
+    for i in range(0, len(s)):
+      if s[i].chat_id==scU.chat_id:
+        s[i]=scU
+        break
   for i in range(0, len(s)):
     vOld = list()
     try:
       vOld=s[i].voti
       s[i].aggiornaVoti()
-      s[i].voti[i]=s[i].voti[i]
       newVote=seeDiff(vOld, s[i].voti)
       if newVote:
         print('NewVotesFound '+s[i].nome)
@@ -363,7 +363,8 @@ def vediMod(bot, shared):
     except Exception as e:
         continue
   shared['user']=s
-  scU.aggiornaVoti()
+  if not shared['firstTimer']:
+    scU.aggiornaVoti()
   shared['cUs']=scU
   if not shared['firstTimer']:
     saveDati(shared)
