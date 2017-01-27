@@ -10,7 +10,7 @@ import apikey
 
 # bot.api.call("sendMessage", {"chat_id": chat.id, "text": 'Testo Del messaggio', "parse_mode": "HTML", "reply_markup": '{"keyboard": [["text": "Testo"]], "one_time_keyboard": false, "resize_keyboard": true}'})
 
-class Voto:
+class voto:
     def __init__(self, v=0.0, m="", t=""):
         self.v = v
         self.materia = m
@@ -20,7 +20,7 @@ class Voto:
         return self.v == other.v and self.materia == other.materia
 
 
-class Utente:
+class utente:
     def __init__(self, chat_id=0, nome=""):
         self.chat_id = chat_id
         self.nome = nome
@@ -50,7 +50,7 @@ class Utente:
             col = row.find_all('td')
             try:
                 if col[1].text[0].isdigit():
-                    vot = Voto(col[1].text, nomiridotti[col[0].text], col[3].text)
+                    vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
                     self.voti.append(vot)
             except Exception:
                 continue
@@ -70,7 +70,7 @@ class Utente:
             col = row.find_all('td')
             try:
                 if col[1].text[0].isdigit():
-                    vot = Voto(col[1].text, nomiridotti[col[0].text], col[3].text)
+                    vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
                     voti.append(vot)
             except Exception:
                 pass
@@ -96,13 +96,13 @@ class Utente:
                 pratico = str(col[28].text).strip()
                 grafico = str(col[31].text).strip()
                 if scritto != "":
-                    med.append(Voto(float(scritto), col[0].text, "Scritto"))
+                    med.append(voto(scritto, col[0].text, "Scritto"))
                 if orale != "":
-                    med.append(Voto(float(orale), col[0].text, "Orale"))
+                    med.append(voto(orale, col[0].text, "Orale"))
                 if pratico != "":
-                    med.append(Voto(float(pratico), col[0].text, "Pratico"))
+                    med.append(voto(pratico, col[0].text, "Pratico"))
                 if grafico != "":
-                    med.append(Voto(float(grafico), col[0].text, "Grafico"))
+                    med.append(voto(grafico, col[0].text, "Grafico"))
             except Exception as e:
                 pass
         return med
@@ -114,7 +114,7 @@ class Utente:
             if i.materia != mat and spaceformat:
                 msg += '\n'
             mat = i.materia
-            msg += nomiridotti[i.materia].upper() + " - " + i.tipo + " - *" + i.v + '*\n'
+            msg += RiduciNome(i.materia).upper() + " - " + i.tipo + " - *" + i.v + '*\n'
         return msg
 
     def checklogin(self):
@@ -133,7 +133,64 @@ class Utente:
             return True
 
 
-nomiridotti = {
+def RiduciNome(m): #per ora la lascio cosi, poi quando ho la sicurezza che siano state inserite tutte le materie usero il dict
+    if m=='LINGUA INGLESE':
+        m='Ing'
+    elif m=='MATEMATICA':
+        m='Mate'
+    elif m=='LINGUA E LETTERATURA ITALIANA':
+        m='Ita'
+    elif m=='LINGUA  E LETTERATURA ITALIANA':
+        m='Ita'
+    elif m=='STORIA':
+        m='Sto'
+    elif m=='SCIENZE MOTORIE E SPORTIVE':
+        m='Ginn'
+    elif m=='SISTEMI E RETI':
+        m='Sist'
+    elif m=='SISTEMI E RETI (LABORATORIO)':
+        m='SisL'
+    elif m=='INFORMATICA':
+        m='Info'
+    elif m=='INFORMATICA (LABORATORIO)':
+        m='InfoL'
+    elif m=='TECNOLOGIE E PROGETTAZIONE DI SISTEMI INFORMATICI E DI TELECOMUNICAZIONI':
+        m='TPS' 
+    elif m=='TECNOLOGIE E PROGETTAZIONE DI SISTEMI INFORMATICI  E DI TELECOMUNICAZIONI':
+        m='TPS'
+    elif m=='TECNOLOGIE E PROGETTAZIONE DI SISTEMI INFORMATICI E DI TELECOMUNICAZIONI (LAB)':
+        m='TPSL'
+    elif m=='CHIMICA ANALITICA E STRUMENTALE':
+        m='Ana'
+    elif m=='CHIMICA ORGANICA E BIOCHIMICA':
+        m='Org'
+    elif m=='TECNOLOGIE CHIMICHE INDUSTRIALI':
+        m='T.C.'
+    elif m=='TECNOLOGIE E PROGETTAZIONE DI SISTEMI ELETTRICI ED ELETTRONICI':
+        m='TPS'
+    elif m=='ELETTROTECNICA ED ELETTRONICA':
+        m='Ele'
+    elif m=='SISTEMI AUTOMATICI':
+        m='Sist'
+    elif m=='TECNOLOGIE E TECNICE DI RAPPRESENTAZIONE GRAFICA':
+        m='Tec'
+    elif m=='TECNOLOGIE E TECNICE DI RAPPRESENTAZIONE GRAFICA LABORATORIO':
+        m='TecL'
+    elif m=='GEOGRAFIA':
+        m='Geo'
+    elif m=='DIRITTO ED ECONOMIA':
+        m='Dir'
+    elif m=='SCIENZE E TECNOLOGIE APPLICATE':
+        m='STA'
+    elif m=='SCIENZE INTEGRATE (CHIMICA)':
+        m='Chim'
+    elif m=='SCIENZE INTEGRATE (FISICA)':
+        m='Fis'
+    elif m=='SCIENZE INTEGRATE (SCIENZE DELLA TERRA E BIOLOGIA)':
+        m='Sci'
+    return m
+
+"""nomiridotti = {
     'LINGUA INGLESE': 'Ing',
     'MATEMATICA': 'Mate',
     'LINGUA E LETTERATURA ITALIANA': 'Ita',
@@ -160,16 +217,19 @@ nomiridotti = {
     'SCIENZE INTEGRATE (CHIMICA)': 'Chim',
     'SCIENZE INTEGRATE (FISICA)': 'Fis',
     'SCIENZE INTEGRATE (SCIENZE DELLA TERRA E BIOLOGIA)': 'Sci'
-}
+}"""
 
 
 def seeDiff(listaa, listab):  # algoritmo per cercare nuovi voti
     nuovivoti = list()
     contatore = 0
     if len(listaa) != len(listab):
-        for voto in listab:
-            if listaa[contatore] != voto:
-                nuovivoti.append(voto)
+        numNewVote = len(listab)-len(listaa)
+        for vot in listab:
+            if listaa[contatore] != vot:
+                nuovivoti.append(vot)
+                if len(nuovivoti)==numNewVote:
+                    break
             else:
                 contatore += 1
     return nuovivoti
@@ -210,9 +270,9 @@ def voteCommand(chat, message, shared):
 
 
 @bot.command('load')
-def loadCommand(chat, message, shared, botc):
+def loadCommand(chat, message, shared, bot):
     if message.sender.username == 'infopz':
-        loadDati(botc, shared)
+        loadDati(bot, shared)
         s = shared['user']
         for i in s:
             print("Load: " + i.nome)
@@ -231,7 +291,7 @@ def chanceCommand(chat, message, shared, args):
     s.setpass(pw)
     if s.checklogin():
         bot.api.call("sendMessage", {
-            "chat_id":      s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
+            "chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
         s.aggiornavoti()
@@ -247,6 +307,9 @@ def chanceCommand(chat, message, shared, args):
 @bot.command('timer')
 def timerCommand(chat, message, shared, bot):
     if message.sender.username == 'infopz':
+        s=shared['user']
+        del s[8]
+        shared['user']=s
         vediMod(bot, shared)
     else:
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
@@ -261,9 +324,9 @@ def votiMateria(chat, message, shared):
         if i.materia != mat:
             msg += '\n'
         mat = i.materia
-        msg += nomiridotti[i.materia.upper()] + " - " + i.tipo + " - *" + i.v + '*\n'
+        msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
     bot.api.call("sendMessage", {
-        "chat_id":      scU.chat_id, "text": msg, "parse_mode": "Markdown",
+        "chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown",
         "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
 
@@ -273,7 +336,7 @@ def medieCommand(chat, message, shared):
     m = scU.findmedie()
     msg = ""
     for i in m:
-        msg += nomiridotti[i.materia[1:]] + " - " + i.tipo + " - *" + i.v + '*\n'
+        msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
     bot.api.call("sendMessage", {
         "chat_id":      scU.chat_id, "text": msg, "parse_mode": "Markdown",
         "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
@@ -377,7 +440,7 @@ def vediMod(bot, shared):
 
 @bot.before_processing
 def processM(chat, message, shared):
-    print("Message from: @" + message.sender.first_name)
+    print("Message from: " + message.sender.first_name)
     s = shared['user']
     scU = shared['cUs']
     if chat.id != scU.chat_id and not shared['load']:
@@ -400,7 +463,7 @@ def processM(chat, message, shared):
                 newUser = False
                 break
         if newUser:
-            nU = Utente(chat.id, message.sender.first_name)
+            nU = utente(chat.id, message.sender.first_name)
             print('NewUser: ' + nU.nome)
             s.append(nU)
             scU = nU
@@ -427,7 +490,7 @@ def processM(chat, message, shared):
 @bot.prepare_memory
 def prepare_memory(shared):
     shared['firstTimer'] = True
-    shared['cUs'] = Utente()
+    shared['cUs'] = utente()
     shared['user'] = list()
     shared['load'] = False
 
