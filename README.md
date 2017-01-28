@@ -1,7 +1,7 @@
 # VotiFermiBot
 A bot for all Enrico Fermi's students
 
-Un ringraziamento speciale a Lorenzo Balugani e a Stefano Pigozzi che hanno aiutato, anche se indirettamente, alla scrittura di questo codice; e anche a tutti gli improvvisati beta-tester miei compagni di classe.
+Un ringraziamento speciale a Lorenzo Balugani e a Stefano Pigozzi che hanno aiutato alla scrittura di questo codice; e anche a tutti gli improvvisati beta-tester miei compagni di classe.
 
 ## Funzioni
 Ogni 15 minuti il bot controlla la presenza di nuovo voti, nel caso ne trovasse uno, invia un messaggio contenente i dati del nuovo voto.
