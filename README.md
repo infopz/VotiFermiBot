@@ -8,7 +8,7 @@ Ogni 15 minuti il bot controlla la presenza di nuovo voti, nel caso ne trovasse 
 Inoltre permette la visualizzazione dei propri voti ordinati per materia o per data, e volendo permette anche la visualizzazione delle medie delle varie materie divise in scritto, orale e pratico.
 
 ## Comandi
-Il bot mette e' programmato per rispondere ad altri comandi oltre ai messaggi utilizzabili dalla tastiera personalizzata:
+Il bot e' programmato per rispondere ad altri comandi oltre ai messaggi utilizzabili dalla tastiera personalizzata:
 
 * `/change newUsername newPassword` Permette di cambiare il proprio username e password nel caso venissero modificati
 * `/load` Carica i dati presenti nel file `user.txt` sostituendo quelli presenti nel programma
