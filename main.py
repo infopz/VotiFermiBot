@@ -146,6 +146,8 @@ def RiduciNome(m): #per ora la lascio cosi, poi quando ho la sicurezza che siano
         m='Sto'
     elif m=='SCIENZE MOTORIE E SPORTIVE':
         m='Ginn'
+    elif m=='TELECOMUNICAZIONI':
+        m='Tele'
     elif m=='SISTEMI E RETI':
         m='Sist'
     elif m=='SISTEMI E RETI (LABORATORIO)':
@@ -220,19 +222,28 @@ def RiduciNome(m): #per ora la lascio cosi, poi quando ho la sicurezza che siano
 }"""
 
 
-def seeDiff(listaa, listab):  # algoritmo per cercare nuovi voti
-    nuovivoti = list()
-    contatore = 0
-    if len(listaa) != len(listab):
-        numNewVote = len(listab)-len(listaa)
-        for vot in listab:
-            if listaa[contatore] != vot:
-                nuovivoti.append(vot)
-                if len(nuovivoti)==numNewVote:
+def seeDiff(a, b):  # algoritmo per cercare nuovi voti
+    nv = list()
+    ai = 0
+    swap = False
+    if len(a) != len(b):
+        numNewVote = len(b)-len(a)        
+        for i in range(0, len(b)):
+            if swap:
+                swap=False
+                ai+=1
+                continue
+            if not a[ai] == b[i]:
+                if b[i]==a[ai+1]:
+                    swap=True
+                    ai+=1
+                else:
+                    nv.append(b[i])
+                if len(nv)==numNewVote:
                     break
             else:
-                contatore += 1
-    return nuovivoti
+                ai += 1
+    return nv
 
 
 bot = botogram.create(apikey.botKey)
@@ -284,22 +295,28 @@ def loadCommand(chat, message, shared, bot):
 @bot.command('change')
 def chanceCommand(chat, message, shared, args):
     s = shared['cUs']
-    msg = args[0] + 'aaaa'
-    us = b64encode(msg.encode('ascii')).decode('ascii')  # cripto il nome utente non appena viene immessa
-    s.setuser(us)
-    pw = b64encode(args[1].encode('ascii')).decode('ascii')  # cripto la password non appena viene immessa
-    s.setpass(pw)
-    if s.checklogin():
+    if not args:
         bot.api.call("sendMessage", {
-            "chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
+            "chat_id": s.chat_id, "text": 'Utilizza questo comando se devi cambiare username e password memorizzati nel bot. \n`/change newUser newPassword`', "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        s.aggiornavoti()
-        s.statusLogin = 0
     else:
-        chat.send('Dati di login non corretti')
-        chat.send('Immetti il tuo username')
-        s.statusLogin = 1
+        msg = args[0] + 'aaaa'
+        us = b64encode(msg.encode('ascii')).decode('ascii')  # cripto il nome utente non appena viene immessa
+        s.setuser(us)
+        pw = b64encode(args[1].encode('ascii')).decode('ascii')  # cripto la password non appena viene immessa
+        s.setpass(pw)
+        if s.checklogin():
+            bot.api.call("sendMessage", {
+                "chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
+                "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+                })
+            s.aggiornavoti()
+            s.statusLogin = 0
+        else:
+            chat.send('Dati di login non corretti')
+            chat.send('Immetti il tuo username')
+            s.statusLogin = 1
     shared['cUs'] = s
     saveDati(shared)
 
@@ -307,9 +324,6 @@ def chanceCommand(chat, message, shared, args):
 @bot.command('timer')
 def timerCommand(chat, message, shared, bot):
     if message.sender.username == 'infopz':
-        s=shared['user']
-        del s[8]
-        shared['user']=s
         vediMod(bot, shared)
     else:
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
@@ -428,7 +442,7 @@ def vediMod(bot, shared):
                     msg += "Hai preso *" + voto.v + '* in ' + voto.materia + " " + voto.tipo + '\n'
                 bot.chat(utenti[i].chat_id).send(msg)
         except Exception as e:
-            pass
+            print("Error NewVoti - User "+str(i)+" Error: "+str(e))
     shared['user'] = utenti
     if not shared['firstTimer']:
         scU.aggiornavoti()
