@@ -475,8 +475,6 @@ def vediMod(bot, shared):
             print("Error NewVoti - User "+str(i)+": "+str(e))
     shared['user'] = utenti
     if not shared['firstTimer']:
-        scU.aggiornavoti()
-    if not shared['firstTimer']:
         saveDati(shared)
     shared['firstTimer'] = False
 
