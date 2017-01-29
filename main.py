@@ -258,26 +258,27 @@ bot = botogram.create(apikey.botKey)
 
 @bot.command('start')
 def hellocomm(chat, message, shared):
+    s = shared['user']
     scU = shared['cUs']
-    if scU.checklogin():
-        msg = 'Ciao, ' + scU.nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
+    if s[scU].checklogin():
+        msg = 'Ciao, ' + s[scU].nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
         bot.api.call("sendMessage", {
-            "chat_id":      scU.chat_id, "text": msg, "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        scU.statusLogin = 0
+        s[scU].statusLogin = 0
     else:
         chat.send(
-            "Benvenuto " + scU.nome + "\nDa ora in poi quando troverò un nuovo voto sul registro ti invierò un messaggio\n\nSe il login dovesse fallire ridai il comando /start\n\nI tuoi dati sono al sicuro! Username e Password vengono criptati appena li inserisci\n\nNel caso qualche materia non venisse abbreviata contattami\n\nBot progettato da Giovanni Casari (@infopz)")
+            "Benvenuto " + s[scU].nome + "\nDa ora in poi quando troverò un nuovo voto sul registro ti invierò un messaggio\n\nSe il login dovesse fallire ridai il comando /start\n\nI tuoi dati sono al sicuro! Username e Password vengono criptati appena li inserisci\n\nNel caso qualche materia non venisse abbreviata contattami\n\nBot progettato da Giovanni Casari (@infopz)")
         chat.send("Inserisci il tuo username del registro:")
-        scU.statusLogin = 1
-    shared['cUs'] = scU
+        s[scU].statusLogin = 1
+    shared['user'] = s
 
 
 @bot.command('load')
 def loadCommand(chat, message, shared, bot):
     if message.sender.username == 'infopz':
-        loadDati(bot, shared)
+        loadDati(shared)
         s = shared['user']
         for i in s:
             print("Load: " + i.nome)
@@ -287,33 +288,33 @@ def loadCommand(chat, message, shared, bot):
 
 
 @bot.command('change')
-def chanceCommand(chat, message, shared, args):
-    s = shared['cUs']
+def changeCommand(chat, message, shared, args):
+    s = shared['user']
+    scU = shared['cUs']
     if not args:
         bot.api.call("sendMessage", {
-            "chat_id": s.chat_id, "text": 'Utilizza questo comando se devi cambiare username e password memorizzati nel bot. \n`/change newUser newPassword`', "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": 'Utilizza questo comando se devi cambiare username e password memorizzati nel bot. \n`/change newUser newPassword`', "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     else:
         msg = args[0] + 'aaaa'
         us = b64encode(msg.encode('ascii')).decode('ascii')  # cripto il nome utente non appena viene immessa
-        s.setuser(us)
+        s[scU].setuser(us)
         pw = b64encode(args[1].encode('ascii')).decode('ascii')  # cripto la password non appena viene immessa
-        s.setpass(pw)
+        s[scU].setpass(pw)
         if s.checklogin():
             bot.api.call("sendMessage", {
-                "chat_id": s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
+                "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
                 })
-            s.aggiornavoti()
-            s.statusLogin = 0
+            s[scU].aggiornavoti()
+            s[scU].statusLogin = 0
         else:
             chat.send('Dati di login non corretti')
             chat.send('Immetti il tuo username')
-            s.statusLogin = 1
-    shared['cUs'] = s
+            s[scU].statusLogin = 1
+    shared['user'] = s
     saveDati(shared)
-
 
 @bot.command('timer')
 def timerCommand(chat, message, shared, bot):
@@ -322,30 +323,48 @@ def timerCommand(chat, message, shared, bot):
     else:
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
 
+@bot.command('del')
+def delCommand(chat, message, shared, args):
+    if message.sender.username=='infopz':
+        s=shared['user']
+        i=int(args[0])
+        print("User "+str(i)+" "+s[i].nome+" deleted")
+        chat.send("User "+str(i)+" "+s[i].nome+" deleted")
+        del s[i]
+        shared['user']=s
+        saveDati(shared)
+    else:
+        bot.api.call("sendMessage", {
+            "chat_id": s[scU].chat_id, "text": "Solo @infopz e' autorizzato ad eseguire questo comando", "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+
 
 def voteCommand(chat, message, shared):
+    s = shared['user']
     scU = shared['cUs']
-    sendTyping(scU.chat_id)
+    sendTyping(s[scU].chat_id)
     try:
-        scU.aggiornavoti()
+        s[scU].aggiornavoti()
         bot.api.call("sendMessage", {
-            "chat_id": scU.chat_id, "text": scU.printvoti(), "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": s[scU].printvoti(), "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     except Exception as e:
         bot.api.call("sendMessage", {
-            "chat_id": scU.chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        print("Error voteCommand - User "+scU.nome+" -")
-    shared['cUs'] = scU
+        print("Error voteCommand - User "+s[scU].nome+" -")
+    shared['user'] = s
     saveDati(shared)
 
 def votiMateria(chat, message, shared):
+    s = shared['user']
     scU = shared['cUs']
-    sendTyping(scU.chat_id)
+    sendTyping(s[scU].chat_id)
     try:
-        voti = scU.votipermateria()
+        voti = s[scU].votipermateria()
         msg = "Ecco i tuoi Voti\n"
         mat = ''
         for i in voti:
@@ -354,108 +373,92 @@ def votiMateria(chat, message, shared):
             mat = i.materia
             msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
-            "chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     except Exception as e:
         bot.api.call("sendMessage", {
-            "chat_id": scU.chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        print("Error voteCommand - User "+scU.nome+" -")
+        print("Error voteCommand - User "+s[scU].nome+" -")
 
 def medieCommand(chat, message, shared):
+    s = shared['user']
     scU = shared['cUs']
-    sendTyping(scU.chat_id)
+    sendTyping(s[scU].chat_id)
     try:
-        m = scU.findmedie()
+        m = s[scU].findmedie()
         msg = ""
         for i in m:
             msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
-            "chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     except Exception as e:
         bot.api.call("sendMessage", {
-            "chat_id": scU.chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        print("Error voteCommand - User "+scU.nome+" -")
+        print("Error voteCommand - User "+s[scU].nome+" -")
 
 
-def prDataAll(s, scU):
+def prDataAll(s):
     for i in s:
         print("n:" + i.nome + " id:" + str(i.chat_id) + " u:" + str(i.userF) + " p:" + str(i.passF) + " " + str(i.statusLogin))
-    print("CU: n:" + scU.nome + " id:" + str(scU.chat_id) + " u:" + str(scU.userF) + " p:" + str(scU.passF) + " " + str(scU.statusLogin))
 
 
 def start1(chat, message, shared):
-    s = shared['cUs']
+    s = shared['user']
+    scU = shared['cUs']
     msg = message.text + 'aaaa'
     us = b64encode(msg.encode('ascii')).decode('ascii')
-    s.setuser(us)
-    s.statusLogin = 2
-    shared['cUs'] = s
+    s[scU].setuser(us)
+    s[scU].statusLogin = 2
+    shared['user'] = s
     chat.send('Ora inserisci la password')
 
 
 def start2(chat, message, shared):
-    s = shared['cUs']
+    s = shared['user']
+    scU = shared['cUs']
     pw = b64encode(message.text.encode('ascii')).decode('ascii')
-    s.setpass(pw)
-    if s.checklogin():
+    s[scU].setpass(pw)
+    if s[scU].checklogin():
         bot.api.call("sendMessage", {
-            "chat_id":      s.chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
+            "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        s.aggiornavoti()
-        s.statusLogin = 0
+        s[scU].aggiornavoti()
+        s[scU].statusLogin = 0
     else:
         chat.send('Dati di login non corretti')
         chat.send('Immetti il tuo username')
-        s.statusLogin = 1
-    shared['cUs'] = s
+        s[scU].statusLogin = 1
+    shared['user'] = s
     saveDati(shared)
 
 
 def saveDati(shared):
     s = shared['user']
-    scU = shared['cUs']
-    n = -1
-    for i in s:
-        n += 1
-        if scU.chat_id == i.chat_id:
-            break
-    if n != -1:
-        s[n] = scU
     f = open('user.txt', 'wb')
     pickle.dump(s, f)
     f.close()
     shared['user'] = s
-    shared['cUs'] = scU
 
 
-def loadDati(bot, shared):
+def loadDati(shared):
     s = shared['user']
-    scU = shared['cUs']
     f = open('user.txt', 'rb')
     s = pickle.load(f)
-    shared['cUs'] = scU
     shared['user'] = s
-    shared['load'] = True
 
 
 @bot.timer(900)
 def vediMod(bot, shared):
     print('Timer')
     utenti = shared['user']
-    scU = shared['cUs']
-    if not shared['firstTimer']:
-        for i in range(0, len(utenti)):
-            if utenti[i].chat_id == scU.chat_id:
-                utenti[i] = scU
-                break
     for i in range(0, len(utenti)):
         votivecchi = list()
         try:
@@ -469,71 +472,53 @@ def vediMod(bot, shared):
                     msg += "Hai preso *" + voto.v + '* in ' + voto.materia + " " + voto.tipo + '\n'
                 bot.chat(utenti[i].chat_id).send(msg)
         except Exception as e:
-            print("Error NewVoti - User "+str(i)+" Error: "+str(e))
+            print("Error NewVoti - User "+str(i)+": "+str(e))
     shared['user'] = utenti
     if not shared['firstTimer']:
         scU.aggiornavoti()
-    shared['cUs'] = scU
     if not shared['firstTimer']:
         saveDati(shared)
     shared['firstTimer'] = False
 
 
 @bot.before_processing
-def processM(chat, message, shared):
+def bef_proc(chat, message, shared):
     print("Message from: " + message.sender.first_name)
     s = shared['user']
     scU = shared['cUs']
-    if chat.id != scU.chat_id and not shared['load']:
-        # salvataggio vecchio currentUser
-        n = -1
-        for i in s:
-            n += 1
-            if scU.chat_id == i.chat_id:
-                break
-        try:
-            if n != -1:
-                s[n] = scU
-        except Exception:
-            pass
-        # inserimento nuovo current user
-        newUser = True
-        for i in s:
-            if chat.id == i.chat_id:
-                scU = i
-                newUser = False
-                break
-        if newUser:
-            nU = utente(chat.id, message.sender.first_name)
-            print('NewUser: ' + nU.nome)
-            s.append(nU)
-            scU = nU
-    elif shared['load']:
-        for i in s:
-            if i.chat_id == scU.chat_id:
-                scU = i
-                break
-        shared['load'] = False
+    if message.text!='/load':
+        if chat.id != s[scU].chat_id:
+            # inserimento nuovo current user
+            newUser = True
+            for i in range(0, len(s)):
+                if chat.id == s[i].chat_id:
+                    scU = i
+                    newUser = False
+                    break
+            if newUser:
+                nU = utente(chat.id, message.sender.first_name)
+                print('NewUser: ' + nU.nome)
+                s.append(nU)
+                scU = len(s)-1
+        if s[scU].statusLogin == 1:
+            start1(chat, message, shared)
+        elif s[scU].statusLogin == 2:
+            start2(chat, message, shared)
+        elif message.text == 'Voti per materia':
+            votiMateria(chat, message, shared)
+        elif message.text == 'Voti per data':
+            voteCommand(chat, message, shared)
+        elif message.text == 'Medie':
+            medieCommand(chat, message, shared)
     shared['user'] = s
     shared['cUs'] = scU
-    if scU.statusLogin == 1:
-        start1(chat, message, shared)
-    elif scU.statusLogin == 2:
-        start2(chat, message, shared)
-    elif message.text == 'Voti per materia':
-        votiMateria(chat, message, shared)
-    elif message.text == 'Voti per data':
-        voteCommand(chat, message, shared)
-    elif message.text == 'Medie':
-        medieCommand(chat, message, shared)
 
-
+    
 @bot.prepare_memory
 def prepare_memory(shared):
     shared['firstTimer'] = True
-    shared['cUs'] = utente()
+    shared['cUs'] = 0
     shared['user'] = list()
-    shared['load'] = False
 
 
 if __name__ == "__main__":
