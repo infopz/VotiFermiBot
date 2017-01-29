@@ -245,6 +245,13 @@ def seeDiff(a, b):  # algoritmo per cercare nuovi voti
                 ai += 1
     return nv
 
+def sendTyping(chat_id):
+    payload={
+        'chat_id': chat_id,
+        'action': 'typing'
+        }
+    a=requests.get('http://api.telegram.org/bot'+apikey.botKey+'/sendChatAction', params=payload)
+
 
 bot = botogram.create(apikey.botKey)
 
@@ -252,7 +259,7 @@ bot = botogram.create(apikey.botKey)
 @bot.command('start')
 def hellocomm(chat, message, shared):
     scU = shared['cUs']
-    if scU.userF != '' and scU.passF != '':
+    if scU.checklogin():
         msg = 'Ciao, ' + scU.nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
         bot.api.call("sendMessage", {
             "chat_id":      scU.chat_id, "text": msg, "parse_mode": "Markdown",
@@ -265,19 +272,6 @@ def hellocomm(chat, message, shared):
         chat.send("Inserisci il tuo username del registro:")
         scU.statusLogin = 1
     shared['cUs'] = scU
-
-
-@bot.command('vote')
-def voteCommand(chat, message, shared):
-    scU = shared['cUs']
-    scU.aggiornavoti()
-    bot.api.call("sendMessage", {
-        "chat_id":      scU.chat_id, "text": scU.printvoti(), "parse_mode": "Markdown",
-        "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
-        })
-    # chat.send(s.printVoti())
-    shared['cUs'] = scU
-    saveDati(shared)
 
 
 @bot.command('load')
@@ -329,32 +323,65 @@ def timerCommand(chat, message, shared, bot):
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
 
 
+def voteCommand(chat, message, shared):
+    scU = shared['cUs']
+    sendTyping(scU.chat_id)
+    try:
+        scU.aggiornavoti()
+        bot.api.call("sendMessage", {
+            "chat_id": scU.chat_id, "text": scU.printvoti(), "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+    except Exception as e:
+        bot.api.call("sendMessage", {
+            "chat_id": scU.chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+        print("Error voteCommand - User "+scU.nome+" -")
+    shared['cUs'] = scU
+    saveDati(shared)
+
 def votiMateria(chat, message, shared):
     scU = shared['cUs']
-    voti = scU.votipermateria()
-    msg = "Ecco i tuoi Voti\n"
-    mat = ''
-    for i in voti:
-        if i.materia != mat:
-            msg += '\n'
-        mat = i.materia
-        msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
-    bot.api.call("sendMessage", {
-        "chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown",
-        "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
-        })
-
+    sendTyping(scU.chat_id)
+    try:
+        voti = scU.votipermateria()
+        msg = "Ecco i tuoi Voti\n"
+        mat = ''
+        for i in voti:
+            if i.materia != mat:
+                msg += '\n'
+            mat = i.materia
+            msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
+        bot.api.call("sendMessage", {
+            "chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+    except Exception as e:
+        bot.api.call("sendMessage", {
+            "chat_id": scU.chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+        print("Error voteCommand - User "+scU.nome+" -")
 
 def medieCommand(chat, message, shared):
     scU = shared['cUs']
-    m = scU.findmedie()
-    msg = ""
-    for i in m:
-        msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
-    bot.api.call("sendMessage", {
-        "chat_id":      scU.chat_id, "text": msg, "parse_mode": "Markdown",
-        "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
-        })
+    sendTyping(scU.chat_id)
+    try:
+        m = scU.findmedie()
+        msg = ""
+        for i in m:
+            msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
+        bot.api.call("sendMessage", {
+            "chat_id": scU.chat_id, "text": msg, "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+    except Exception as e:
+        bot.api.call("sendMessage", {
+            "chat_id": scU.chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+        print("Error voteCommand - User "+scU.nome+" -")
 
 
 def prDataAll(s, scU):
@@ -366,7 +393,7 @@ def prDataAll(s, scU):
 def start1(chat, message, shared):
     s = shared['cUs']
     msg = message.text + 'aaaa'
-    us = b64encode(msg.encode('ascii')).decode('ascii')  # TODO: pls no
+    us = b64encode(msg.encode('ascii')).decode('ascii')
     s.setuser(us)
     s.statusLogin = 2
     shared['cUs'] = s
@@ -375,7 +402,7 @@ def start1(chat, message, shared):
 
 def start2(chat, message, shared):
     s = shared['cUs']
-    pw = b64encode(message.text.encode('ascii')).decode('ascii')  # TODO: pls no anche qui
+    pw = b64encode(message.text.encode('ascii')).decode('ascii')
     s.setpass(pw)
     if s.checklogin():
         bot.api.call("sendMessage", {
