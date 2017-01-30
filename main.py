@@ -291,7 +291,7 @@ def loadCommand(chat, message, shared, bot):
 def changeCommand(chat, message, shared, args):
     s = shared['user']
     scU = shared['cUs']
-    if not args:
+    if not args or len(args)!=2:
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": 'Utilizza questo comando se devi cambiare username e password memorizzati nel bot. \n`/change newUser newPassword`', "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
@@ -302,7 +302,7 @@ def changeCommand(chat, message, shared, args):
         s[scU].setuser(us)
         pw = b64encode(args[1].encode('ascii')).decode('ascii')  # cripto la password non appena viene immessa
         s[scU].setpass(pw)
-        if s.checklogin():
+        if s[scU].checklogin():
             bot.api.call("sendMessage", {
                 "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
