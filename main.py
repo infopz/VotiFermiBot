@@ -42,20 +42,47 @@ class utente:
         payload = {'ob_user': user, 'ob_password': pw}
         s = requests.Session()
         s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
-        r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati1Q.php')
+        r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
         soup = BeautifulSoup(r.text, "html.parser")
         table = soup.find("table", {"class": "TabellaVoti"})
-        self.voti = list()
-        for row in table.find_all('tr'):
-            col = row.find_all('td')
-            try:
-                if col[1].text[0].isdigit():
-                    vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
-                    self.voti.append(vot)
-            except Exception:
-                continue
+        if table==None:
+            self.voti = list()
+        else:
+            self.voti = list()
+            for row in table.find_all('tr'):
+                col = row.find_all('td')
+                try:
+                    if col[1].text[0].isdigit():
+                        vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
+                        self.voti.append(vot)
+                except Exception:
+                    continue
 
     def votipermateria(self):
+        user = b64decode(self.userF).decode('ascii')
+        user = user[0:-4]
+        pw = b64decode(self.passF).decode('ascii')
+        payload = {'ob_user': user, 'ob_password': pw}
+        s = requests.Session()
+        s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
+        r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudente2Q.php')
+        soup = BeautifulSoup(r.text, "html.parser")
+        table = soup.find("table", {"class": "TabellaVoti"})
+        if table==None:
+            voti = list()
+        else:
+            voti = list()
+            for row in table.find_all('tr'):
+                col = row.find_all('td')
+                try:
+                    if col[1].text[0].isdigit():
+                        vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
+                        self.voti.append(vot)
+                except Exception:
+                    continue
+        return voti
+
+    def voti1q(self):
         user = b64decode(self.userF).decode('ascii')
         user = user[0:-4]
         pw = b64decode(self.passF).decode('ascii')
@@ -83,8 +110,8 @@ class utente:
         payload = {'ob_user': user, 'ob_password': pw}
         s = requests.Session()
         s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
-        s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudente1Q.php')
-        r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudenteRiepilogo1Q.php')
+        s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudente2Q.php')
+        r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiStudenteRiepilogo2Q.php')
         soup = BeautifulSoup(r.text, "html.parser")
         table = soup.find("table", {"class": "TabellaRiepilogo"})
         med = list()
@@ -264,7 +291,7 @@ def hellocomm(chat, message, shared):
         msg = 'Ciao, ' + s[scU].nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
         s[scU].statusLogin = 0
     else:
@@ -294,7 +321,7 @@ def changeCommand(chat, message, shared, args):
     if not args or len(args)!=2:
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": 'Utilizza questo comando se devi cambiare username e password memorizzati nel bot. \n`/change newUser newPassword`', "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     else:
         msg = args[0] + 'aaaa'
@@ -305,7 +332,7 @@ def changeCommand(chat, message, shared, args):
         if s[scU].checklogin():
             bot.api.call("sendMessage", {
                 "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
-                "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+                "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
                 })
             s[scU].aggiornavoti()
             s[scU].statusLogin = 0
@@ -336,7 +363,7 @@ def delCommand(chat, message, shared, args):
     else:
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": "Solo @infopz e' autorizzato ad eseguire questo comando", "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
 
 
@@ -346,16 +373,23 @@ def voteCommand(chat, message, shared):
     sendTyping(s[scU].chat_id)
     try:
         s[scU].aggiornavoti()
+        msg=''
+        if len(s[scU].voti)==0:
+            print("novote")
+            msg='Non hai ancora nessun voto nel secondo quadrimestre'
+        else:
+            print("vote")
+            msg=s[scU].printvoti()
         bot.api.call("sendMessage", {
-            "chat_id": s[scU].chat_id, "text": s[scU].printvoti(), "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     except Exception as e:
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        print("Error voteCommand - User "+s[scU].nome+" -")
+        print("Error voteCommand - User "+s[scU].nome+" - "+str(e))
     shared['user'] = s
     saveDati(shared)
 
@@ -364,22 +398,26 @@ def votiMateria(chat, message, shared):
     scU = shared['cUs']
     sendTyping(s[scU].chat_id)
     try:
+        msg=''
         voti = s[scU].votipermateria()
-        msg = "Ecco i tuoi Voti\n"
-        mat = ''
-        for i in voti:
-            if i.materia != mat:
-                msg += '\n'
-            mat = i.materia
-            msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
+        if len(voti)==0:
+            msg='Non hai ancora nessun voto nel secondo quadrimestre'
+        else:
+            msg = "Ecco i tuoi Voti\n"
+            mat = ''
+            for i in voti:
+                if i.materia != mat:
+                    msg += '\n'
+                mat = i.materia
+                msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
-            })
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+                })
     except Exception as e:
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
         print("Error voteCommand - User "+s[scU].nome+" -")
 
@@ -390,19 +428,44 @@ def medieCommand(chat, message, shared):
     try:
         m = s[scU].findmedie()
         msg = ""
-        for i in m:
-            msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
+        if len(m)==0:
+            msg="Non hai ancora nessun voto nel secondo quadrimestre"
+        else:
+            for i in m:
+                msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
     except Exception as e:
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        print("Error voteCommand - User "+s[scU].nome+" -")
+        print("Error voteCommand - User "+s[scU].nome+" - "+str(e))
 
+def voti1q(chat, message, shared):
+    s=shared['user']
+    scU = shared['cUs']
+    try:
+        voti = s[scU].voti1q()
+        msg = "Ecco i tuoi voti del primo quadrimestre\n"
+        mat = ''
+        for i in voti:
+            if i.materia != mat:
+                msg += '\n'
+            mat = i.materia
+            msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
+        bot.api.call("sendMessage", {
+            "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+    except Exception as e:
+        bot.api.call("sendMessage", {
+            "chat_id": s[scU].chat_id, "text": "Errore nel login\nDai il comando /start e riprova\nNel caso il problema si dovesse ripresentare contatta @infopz", "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+        print("Error voteCommand - User "+s[scU].nome+" - "+str(e))
 
 def prDataAll(s):
     for i in s:
@@ -428,7 +491,7 @@ def start2(chat, message, shared):
     if s[scU].checklogin():
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}],[{"text":"Voti per data"}, {"text": "Medie"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
         s[scU].aggiornavoti()
         s[scU].statusLogin = 0
@@ -498,6 +561,8 @@ def bef_proc(chat, message, shared):
                 print('NewUser: ' + nU.nome)
                 s.append(nU)
                 scU = len(s)-1
+        shared['user'] = s
+        shared['cUs'] = scU
         if s[scU].statusLogin == 1:
             start1(chat, message, shared)
         elif s[scU].statusLogin == 2:
@@ -508,8 +573,9 @@ def bef_proc(chat, message, shared):
             voteCommand(chat, message, shared)
         elif message.text == 'Medie':
             medieCommand(chat, message, shared)
-    shared['user'] = s
-    shared['cUs'] = scU
+        elif message.text=='Voti 1°Quad':
+            voti1q(chat, message, shared)
+    
 
     
 @bot.prepare_memory
