@@ -375,10 +375,8 @@ def voteCommand(chat, message, shared):
         s[scU].aggiornavoti()
         msg=''
         if len(s[scU].voti)==0:
-            print("novote")
             msg='Non hai ancora nessun voto nel secondo quadrimestre'
         else:
-            print("vote")
             msg=s[scU].printvoti()
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
