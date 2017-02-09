@@ -555,7 +555,12 @@ def bef_proc(chat, message, shared):
                     newUser = False
                     break
             if newUser:
-                nU = utente(chat.id, message.sender.first_name)
+                nom_user = ''
+                if(message.sender.username!=None):
+                    nom_user=message.sender.username
+                else:
+                    nom_user=message.sender.first_name
+                nU = utente(chat.id, nom_user)
                 print('NewUser: ' + nU.nome)
                 s.append(nU)
                 scU = len(s)-1
