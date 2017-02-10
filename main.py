@@ -282,9 +282,8 @@ def sendTyping(chat_id):
 
 bot = botogram.create(apikey.botKey)
 
-
 @bot.command('start')
-def hellocomm(chat, message, shared):
+def startcomm(chat, message, shared):
     s = shared['user']
     scU = shared['cUs']
     if s[scU].checklogin():
@@ -307,9 +306,11 @@ def loadCommand(chat, message, shared, bot):
     if message.sender.username == 'infopz':
         loadDati(shared)
         s = shared['user']
+        n=0
         for i in s:
-            print("Load: " + i.nome)
-        chat.send('Dati Caricati')
+            print("Load "+str(n)+": " + i.nome)
+            n+=1
+        chat.send('Dati Caricati - Utenti:'+str(n))
     else:
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
 
@@ -446,6 +447,7 @@ def voti1q(chat, message, shared):
     s=shared['user']
     scU = shared['cUs']
     try:
+        sendTyping(s[scU].chat_id)
         voti = s[scU].voti1q()
         msg = "Ecco i tuoi voti del primo quadrimestre\n"
         mat = ''
@@ -516,7 +518,7 @@ def loadDati(shared):
     shared['user'] = s
 
 
-@bot.timer(900)
+@bot.timer(7200)
 def vediMod(bot, shared):
     print('Timer')
     utenti = shared['user']
@@ -542,7 +544,12 @@ def vediMod(bot, shared):
 
 @bot.before_processing
 def bef_proc(chat, message, shared):
-    print("Message from: " + message.sender.first_name)
+    nom=''
+    if message.sender.username!=None:
+        nom=message.sender.username
+    else:
+        nom=message.sender.first_name
+    print("Message from: " + nom)
     s = shared['user']
     scU = shared['cUs']
     if message.text!='/load':
@@ -555,12 +562,7 @@ def bef_proc(chat, message, shared):
                     newUser = False
                     break
             if newUser:
-                nom_user = ''
-                if(message.sender.username!=None):
-                    nom_user=message.sender.username
-                else:
-                    nom_user=message.sender.first_name
-                nU = utente(chat.id, nom_user)
+                nU = utente(chat.id, nom)
                 print('NewUser: ' + nU.nome)
                 s.append(nU)
                 scU = len(s)-1
@@ -580,7 +582,6 @@ def bef_proc(chat, message, shared):
             voti1q(chat, message, shared)
     
 
-    
 @bot.prepare_memory
 def prepare_memory(shared):
     shared['firstTimer'] = True
