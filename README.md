@@ -4,7 +4,7 @@ A bot for all Enrico Fermi's students
 Un ringraziamento speciale a Lorenzo Balugani e a Stefano Pigozzi che hanno aiutato alla scrittura di questo codice; e anche a tutti gli improvvisati beta-tester miei compagni di classe.
 
 ## Funzioni
-Ogni 15 minuti il bot controlla la presenza di nuovo voti, nel caso ne trovasse uno, invia un messaggio contenente i dati del nuovo voto.
+Ogni 2 ore (il tempo verra' cambiato in periodo di scrutini) il bot controlla la presenza di nuovo voti, nel caso ne trovasse uno, invia un messaggio contenente i dati del nuovo voto.
 Inoltre permette la visualizzazione dei propri voti ordinati per materia o per data, e volendo permette anche la visualizzazione delle medie delle varie materie divise in scritto, orale e pratico.
 
 ## Comandi
