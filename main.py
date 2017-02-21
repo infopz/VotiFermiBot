@@ -2,6 +2,7 @@
 import botogram
 from bs4 import BeautifulSoup
 from base64 import b64encode, b64decode
+from time import gmtime, strftime
 import requests
 import pickle
 
@@ -41,6 +42,8 @@ class utente:
         pw = b64decode(self.passF).decode('ascii')
         payload = {'ob_user': user, 'ob_password': pw}
         s = requests.Session()
+        #s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
+        #r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
         s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
         r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
         soup = BeautifulSoup(r.text, "html.parser")
@@ -77,9 +80,9 @@ class utente:
                 try:
                     if col[1].text[0].isdigit():
                         vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
-                        self.voti.append(vot)
-                except Exception:
-                    continue
+                        voti.append(vot)
+                except Exception as e:
+                    pass
         return voti
 
     def voti1q(self):
@@ -253,6 +256,8 @@ def seeDiff(a, b):  # algoritmo per cercare nuovi voti
     nv = list()
     ai = 0
     swap = False
+    if len(a) == 0:
+        return b
     if len(a) != len(b):
         numNewVote = len(b)-len(a)        
         for i in range(0, len(b)):
@@ -367,6 +372,13 @@ def delCommand(chat, message, shared, args):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
 
+@bot.command('delvoti')
+def delvoti(chat, message, shared):
+    s = shared['user']
+    for i in range (0, len(s)-1):
+        s[i].voti = list()
+    shared['user']=s
+    chat.send('fatto')
 
 def voteCommand(chat, message, shared):
     s = shared['user']
@@ -520,7 +532,11 @@ def loadDati(shared):
 
 @bot.timer(7200)
 def vediMod(bot, shared):
-    print('Timer')
+    h = int(strftime("%H", gmtime()))+1
+    print(str(h))
+    if h>=22 or h<=7:
+        return
+    print("Timer "+str(h))
     utenti = shared['user']
     for i in range(0, len(utenti)):
         votivecchi = list()
