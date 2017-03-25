@@ -368,17 +368,33 @@ def delCommand(chat, message, shared, args):
         saveDati(shared)
     else:
         bot.api.call("sendMessage", {
-            "chat_id": s[scU].chat_id, "text": "Solo @infopz e' autorizzato ad eseguire questo comando", "parse_mode": "Markdown",
+            "chat_id": shared['user'[shared['scu']]].chat_id, "text": "Solo @infopz e' autorizzato ad eseguire questo comando", "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
 
-@bot.command('delvoti')
-def delvoti(chat, message, shared):
+
+@bot.command('all')
+def allCommand(chat, message, shared):
     s = shared['user']
-    for i in range (0, len(s)-1):
-        s[i].voti = list()
-    shared['user']=s
-    chat.send('fatto')
+    scU = shared['cUs']
+    if message.sender.username!='infopz':
+        bot.api.call("sendMessage", {
+            "chat_id": s[scU].chat_id,
+            "text": "Solo @infopz e' autorizzato ad eseguire questo comando", "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+        })
+        return
+    m = "Nuova comunicazione! \n"+message.text[5:]
+    for i in s:
+        bot.api.call("sendMessage", {
+            "chat_id": i.chat_id,
+            "text": m, "parse_mode": "Markdown",
+            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+        })
+        try:
+        	print("Comunicazione inviata a "+str(i.nome))
+        except Exception:
+        	print("Error with sending the comunication")
 
 def voteCommand(chat, message, shared):
     s = shared['user']
