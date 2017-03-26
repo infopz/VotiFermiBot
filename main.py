@@ -504,31 +504,37 @@ def start1(chat, message, shared):
     s = shared['user']
     scU = shared['cUs']
     msg = message.text + 'aaaa'
-    us = b64encode(msg.encode('ascii')).decode('ascii')
-    s[scU].setuser(us)
-    s[scU].statusLogin = 2
-    shared['user'] = s
-    chat.send('Ora inserisci la password')
+    if msg.isalnum():
+        us = b64encode(msg.encode('ascii')).decode('ascii')
+        s[scU].setuser(us)
+        s[scU].statusLogin = 2
+        shared['user'] = s
+        chat.send('Ora inserisci la password')
+    else:
+        chat.send('Username non valido, riprova')
 
 
 def start2(chat, message, shared):
     s = shared['user']
     scU = shared['cUs']
-    pw = b64encode(message.text.encode('ascii')).decode('ascii')
-    s[scU].setpass(pw)
-    if s[scU].checklogin():
-        bot.api.call("sendMessage", {
-            "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
-            })
-        s[scU].aggiornavoti()
-        s[scU].statusLogin = 0
+    if message.text.isprintable():
+        pw = b64encode(message.text.encode('ascii')).decode('ascii')
+        s[scU].setpass(pw)
+        if s[scU].checklogin():
+            bot.api.call("sendMessage", {
+                "chat_id": s[scU].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!', "parse_mode": "Markdown",
+                "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+                })
+            s[scU].aggiornavoti()
+            s[scU].statusLogin = 0
+        else:
+            chat.send('Dati di login non corretti')
+            chat.send('Immetti il tuo username')
+            s[scU].statusLogin = 1
+        shared['user'] = s
+        saveDati(shared)
     else:
-        chat.send('Dati di login non corretti')
-        chat.send('Immetti il tuo username')
-        s[scU].statusLogin = 1
-    shared['user'] = s
-    saveDati(shared)
+        chat.send('Password non valida, riprova')
 
 
 def saveDati(shared):
