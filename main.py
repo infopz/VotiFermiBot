@@ -377,8 +377,11 @@ def delCommand(chat, message, shared, args):
         shared['user'] = s
         saveDati(shared)
     else:
+        s = shared['user']
+        scu = shared['scU']
+        cID = s[scu].chat_id
         bot.api.call("sendMessage", {
-            "chat_id": shared['user'[shared['scu']]].chat_id,
+            "chat_id": cID,
             "text": "Solo @infopz e' autorizzato ad eseguire questo comando", "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
@@ -581,10 +584,11 @@ def loadDati(shared):
 @bot.timer(7200)
 def vediMod(bot, shared):
     h = int(strftime("%H", gmtime())) + 1
-    print(str(h))
     if h >= 22 or h <= 7:
+        print("NOTime "+str(h))
         return
-    print("Timer " + str(h))
+    else:
+        print("Time " + str(h))
     utenti = shared['user']
     for i in range(0, len(utenti)):
         votivecchi = list()
