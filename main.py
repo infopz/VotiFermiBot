@@ -379,7 +379,7 @@ def delCommand(chat, message, shared, args):
         saveDati(shared)
     else:
         s = shared['user']
-        scu = shared['scU']
+        scu = shared['sCu']
         cID = s[scu].chat_id
         bot.api.call("sendMessage", {
             "chat_id": cID,
