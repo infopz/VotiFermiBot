@@ -164,8 +164,7 @@ class utente:
             return True
 
 
-def RiduciNome(
-        m):  # per ora la lascio cosi, poi quando ho la sicurezza che siano state inserite tutte le materie usero il dict
+def RiduciNome(m):  # per ora la lascio cosi, poi quando ho la sicurezza che siano state inserite tutte le materie usero il dict
     if m == 'LINGUA INGLESE':
         m = 'Ing'
     elif m == 'MATEMATICA':
