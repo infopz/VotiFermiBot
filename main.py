@@ -2,7 +2,7 @@
 import botogram
 from bs4 import BeautifulSoup
 from base64 import b64encode, b64decode
-from time import gmtime, strftime
+from time import gmtime, strftime, sleep
 import requests
 import pickle
 
@@ -604,7 +604,8 @@ def vediMod(bot, shared):
                     msg += "Hai preso *" + voto.v + '* in ' + voto.materia + " " + voto.tipo + '\n'
                 bot.chat(utenti[i].chat_id).send(msg)
         except Exception as e:
-            print("Error NewVoti - User " + str(i) + ": " + str(e))
+            print("Error NewVoti - User " + str(i.nome))
+        sleep(17)
     shared['user'] = utenti
     if not shared['firstTimer']:
         saveDati(shared)
