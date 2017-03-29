@@ -12,10 +12,11 @@ import apikey
 # bot.api.call("sendMessage", {"chat_id": chat.id, "text": 'Testo Del messaggio', "parse_mode": "HTML", "reply_markup": '{"keyboard": [["text": "Testo"]], "one_time_keyboard": false, "resize_keyboard": true}'})
 
 class voto:
-    def __init__(self, v=0.0, m="", t=""):
+    def __init__(self, v=0.0, m="", t="", d=""):
         self.v = v
         self.materia = m
         self.tipo = t
+        self.data = d.replace('-', '/')
 
     def __eq__(self, other):
         return self.v == other.v and self.materia == other.materia
@@ -56,7 +57,7 @@ class utente:
                 col = row.find_all('td')
                 try:
                     if col[1].text[0].isdigit():
-                        vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
+                        vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text, col[2].text[1:6])
                         self.voti.append(vot)
                 except Exception:
                     continue
@@ -79,7 +80,7 @@ class utente:
                 col = row.find_all('td')
                 try:
                     if col[1].text[0].isdigit():
-                        vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
+                        vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text, col[2].text[1:6])
                         voti.append(vot)
                 except Exception as e:
                     pass
@@ -100,7 +101,7 @@ class utente:
             col = row.find_all('td')
             try:
                 if col[1].text[0].isdigit():
-                    vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text)
+                    vot = voto(col[1].text, RiduciNome(col[0].text), col[3].text, col[2].text[1:6])
                     voti.append(vot)
             except Exception:
                 pass
@@ -144,7 +145,7 @@ class utente:
             if i.materia != mat and spaceformat:
                 msg += '\n'
             mat = i.materia
-            msg += RiduciNome(i.materia).upper() + " - " + i.tipo + " - *" + i.v + '*\n'
+            msg += RiduciNome(i.materia).upper() + " - " + i.tipo + " - "+ i.data + " - *" + i.v + '*\n'
         return msg
 
     def checklogin(self):
@@ -400,12 +401,12 @@ def allCommand(chat, message, shared):
         return
     m = "Nuova comunicazione! \n" + message.text[5:]
     for i in s:
-        bot.api.call("sendMessage", {
-            "chat_id": i.chat_id,
-            "text": m, "parse_mode": "Markdown",
-            "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
-        })
         try:
+            bot.api.call("sendMessage", {
+                "chat_id": i.chat_id,
+                "text": m, "parse_mode": "Markdown",
+                "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
             print("Comunicazione inviata a " + str(i.nome))
         except Exception:
             print("Error with sending the comunication")
@@ -454,7 +455,7 @@ def votiMateria(chat, message, shared):
                 if i.materia != mat:
                     msg += '\n'
                 mat = i.materia
-                msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
+                msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - "+ i.data +" - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
@@ -507,7 +508,7 @@ def voti1q(chat, message, shared):
             if i.materia != mat:
                 msg += '\n'
             mat = i.materia
-            msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - *" + i.v + '*\n'
+            msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - " + i.data + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": s[scU].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
