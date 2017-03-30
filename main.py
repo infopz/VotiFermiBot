@@ -614,6 +614,10 @@ def vediMod(bot, shared):
         saveDati(shared)
     shared['firstTimer'] = False
 
+@bot.timer(5)
+def resetControlNumber(shared):
+    shared['maxMess']=0
+
 
 @bot.before_processing
 def bef_proc(chat, message, shared):
@@ -625,6 +629,10 @@ def bef_proc(chat, message, shared):
     print("Message from: " + nom)
     s = shared['user']
     scU = shared['cUs']
+    shared['maxMess']+=1
+    if shared['maxMess']>4:
+        print('Error - Too Much Message')
+        return
     if message.text != '/load':
         if chat.id != s[scU].chat_id:
             # inserimento nuovo current user
@@ -660,6 +668,7 @@ def prepare_memory(shared):
     shared['firstTimer'] = True
     shared['cUs'] = 0
     shared['user'] = list()
+    shared['maxMess'] = 0
 
 
 if __name__ == "__main__":
