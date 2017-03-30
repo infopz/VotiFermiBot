@@ -45,10 +45,14 @@ class utente:
         s = requests.Session()
         # s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
         # r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
-        s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
-        r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
-        soup = BeautifulSoup(r.text, "html.parser")
-        table = soup.find("table", {"class": "TabellaVoti"})
+        try:
+            s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
+            r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
+            soup = BeautifulSoup(r.text, "html.parser")
+            table = soup.find("table", {"class": "TabellaVoti"})
+        except Exception:
+            print("Error VoteUpdate - User " + self.nome)
+            return
         if table == None:
             self.voti = list()
         else:
