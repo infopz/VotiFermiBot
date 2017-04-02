@@ -140,7 +140,13 @@ def voteCommand(chat, message, shared):
     scU = shared['cUs']
     sendTyping(s[scU].chat_id)
     try:
-        s[scU].aggiornavoti()
+        s[scU].aggiornavoti(shared)
+        if shared['badReq']:
+            bot.api.call("sendMessage", {
+                "chat_id": s[scU].chat_id, "text": "Scusa se ci ho messo tanto ma il server del registro e' impallato", "parse_mode": "Markdown",
+                "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+            })
+        shared['badReq'] = False
         msg = ''
         if len(s[scU].voti) == 0:
             msg = 'Non hai ancora nessun voto nel secondo quadrimestre'
@@ -279,6 +285,7 @@ def start2(chat, message, shared):
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
             s[scU].aggiornavoti()
+            shared['badReq'] = False
             s[scU].statusLogin = 0
         else:
             chat.send('Dati di login non corretti')
@@ -303,12 +310,13 @@ def loadDati(shared):
     f = open('user.txt', 'rb')
     s = pickle.load(f)
     shared['user'] = s
+    print("LoadDati")
 
 
 @bot.timer(7200)
 def vediMod(bot, shared):
     h = int(strftime("%H", gmtime())) + 1
-    if h >= 22 or h <= 7:
+    if h >= 20 or h <= 5:
         print("NOTime "+str(h))
         return
     else:
@@ -318,7 +326,10 @@ def vediMod(bot, shared):
         votivecchi = list()
         try:
             votivecchi = utenti[i].voti
-            utenti[i].aggiornavoti()
+            utenti[i].aggiornavoti(shared)
+            if shared['badReq']:
+                bot.chat(20403805).send('Bad Request - Caronte Fuck')
+            shared['badReq'] = False
             nuovivoti = seeDiff(votivecchi, utenti[i].voti)
             if len(nuovivoti) > 0:
                 print('NewVotesFound ' + utenti[i].nome)
@@ -327,9 +338,12 @@ def vediMod(bot, shared):
                     msg += "Hai preso *" + voto.v + '* in ' + voto.materia + " " + voto.tipo + '\n'
                 bot.chat(utenti[i].chat_id).send(msg)
         except Exception as e:
-            print("Error NewVoti - User " + str(i.nome))
-        sleep(17)
+            print("Error NewVoti - User " + str(utenti[i].nome)+ ' ' +str(e))
+        if i % 5 == 0 and i!=0: #per non sovraccaricare il server
+            sleep(30)
+        sleep(3)
     shared['user'] = utenti
+    u = shared['user']
     if not shared['firstTimer']:
         saveDati(shared)
     shared['firstTimer'] = False
@@ -389,6 +403,7 @@ def prepare_memory(shared):
     shared['cUs'] = 0
     shared['user'] = list()
     shared['maxMess'] = 0
+    shared['badReq'] = False
 
 
 if __name__ == "__main__":

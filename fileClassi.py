@@ -32,7 +32,7 @@ class utente:
     def setpass(self, p):
         self.passF = p
 
-    def aggiornavoti(self):
+    def aggiornavoti(self, shared):
         user = b64decode(self.userF).decode('ascii')
         user = user[0:-4]
         pw = b64decode(self.passF).decode('ascii')
@@ -41,8 +41,16 @@ class utente:
         # s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
         # r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
         try:
-            s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
-            r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
+            ripeti = True
+            while ripeti:
+                s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
+                r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
+                if len(r.text)!=11610:
+                    ripeti=False
+                else:
+                    print("Retry Request - Caronte fuck")
+                    shared['badReq'] = True
+                    sleep(30)
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table", {"class": "TabellaVoti"})
         except Exception:
