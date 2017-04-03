@@ -134,6 +134,15 @@ def allCommand(chat, message, shared):
         except Exception:
             print("Error with sending the comunication")
 
+@bot.command('help')
+def helpCommand(chat, message):
+    m="Ecco i comandi che puoi usare:\n" \
+      "  /start - Fai partire il Bot\n" \
+      "  /change - Cambia lo user e password memorizzati\n" \
+      "  /help - Visualizza questo messaggio\n" \
+      "\n" \
+      "Per qualsiasi informazione o problema contatta @infopz"
+    chat.send(m)
 
 def voteCommand(chat, message, shared):
     s = shared['user']
