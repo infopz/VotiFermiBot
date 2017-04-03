@@ -49,7 +49,6 @@ class utente:
                     ripeti=False
                 else:
                     if shared['badReq']:
-                        self.voti = list()
                         print("Bad Request - List Set to Empty")
                         break
                     print("Retry Request - Caronte fuck")
