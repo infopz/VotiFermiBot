@@ -338,6 +338,7 @@ def vediMod(bot, shared):
             utenti[i].aggiornavoti(shared)
             if shared['badReq']:
                 bot.chat(20403805).send('Bad Request - Caronte Fuck')
+                continue
             shared['badReq'] = False
             nuovivoti = seeDiff(votivecchi, utenti[i].voti)
             if len(nuovivoti) > 0:
