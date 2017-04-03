@@ -332,7 +332,7 @@ def vediMod(bot, shared):
             shared['badReq'] = False
             nuovivoti = seeDiff(votivecchi, utenti[i].voti)
             if len(nuovivoti) > 0:
-                print('NewVotesFound ' + utenti[i].nome)
+                print('NewVotesFound ' + utenti[i].nome+' '+str(len(nuovivoti)))
                 msg = "Ehi, " + utenti[i].nome + ", hai dei nuovi voti sul registro:\n"
                 for voto in nuovivoti:
                     msg += "Hai preso *" + voto.v + '* in ' + voto.materia + " " + voto.tipo + '\n'
@@ -341,7 +341,7 @@ def vediMod(bot, shared):
             print("Error NewVoti - User " + str(utenti[i].nome)+ ' ' +str(e))
         if i % 5 == 0 and i!=0: #per non sovraccaricare il server
             sleep(30)
-        sleep(3)
+        sleep(2)
     shared['user'] = utenti
     u = shared['user']
     if not shared['firstTimer']:

@@ -48,9 +48,13 @@ class utente:
                 if len(r.text)!=11610:
                     ripeti=False
                 else:
+                    if shared['badReq']:
+                        self.voti = list()
+                        print("Bad Request - List Set to Empty")
+                        break
                     print("Retry Request - Caronte fuck")
                     shared['badReq'] = True
-                    sleep(30)
+                    sleep(600)
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table", {"class": "TabellaVoti"})
         except Exception:
