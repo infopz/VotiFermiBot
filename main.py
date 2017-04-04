@@ -6,6 +6,7 @@ from time import gmtime, strftime, sleep
 import requests
 import pickle
 import traceback
+from raven import Client
 
 from class_file import *
 import apikey
@@ -15,6 +16,7 @@ import apikey
 
 bot = botogram.create(apikey.botKey)
 
+client = Client(apikey.sentryKey)
 
 @bot.command('start')
 def start_command(chat, message, shared):
@@ -358,6 +360,7 @@ def check_updates(bot, shared):
         print(f"NO Time {hour}")
         return
     print("Time " + str(hour))
+    client.captureMessage('Timer Start')
     students = shared['user']
     log_write("Timer Start")
     for i, student in enumerate(students):
@@ -373,7 +376,7 @@ def check_updates(bot, shared):
                 msg = f"Ehi, {student.nome}, hai dei nuovi voti sul registro:\n"
                 for voto in new_voti:
                     msg += f"Hai preso *{voto.voto}* in {voto.materia} {voto.tipo}\n"
-                bot.chat(student.chat_id).send(msg)
+                #bot.chat(student.chat_id).send(msg)
         except Exception as e:
             print(f"Error NewVoti - User {student.nome} {e}")
             log_write('TIMER ERROR: USER ' + student.nome, traceback.format_exc())
@@ -384,6 +387,7 @@ def check_updates(bot, shared):
     if not shared['firstTimer']:
         save_data(shared)
     log_write("Timer End")
+    client.captureMessage('Timer End')
     shared['firstTimer'] = False
 
 @bot.timer(5)
@@ -407,7 +411,7 @@ def before_processing(chat, message, shared):
     if message.text != '/load':
         if chat.id != students[user_index].chat_id:
             # inserimento nuovo current user
-            for student in range(0, len(students)):
+            for i in range(0, len(students)):
                 if chat.id == students[i].chat_id:
                     user_index = i
                     break
