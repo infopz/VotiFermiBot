@@ -407,9 +407,9 @@ def before_processing(chat, message, shared):
     if message.text != '/load':
         if chat.id != students[user_index].chat_id:
             # inserimento nuovo current user
-            for student in students:
-                if chat.id == student.chat_id:
-                    user_index = student
+            for student in range(0, len(students)):
+                if chat.id == students[i].chat_id:
+                    user_index = i
                     break
             else:
                 new_user = Utente(chat.id, name)
