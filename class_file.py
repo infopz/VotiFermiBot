@@ -1,4 +1,3 @@
-import time
 import requests
 from bs4 import BeautifulSoup
 from base64 import b64encode, b64decode
@@ -21,7 +20,7 @@ class Voto:
         return f"Voto(voto={self.voto}, materia={self.materia}, tipo={self.tipo}, data={self.data})"
 
     def __str__(self):
-        return f"{self.voto} in {self.materia} {self.tipo} del {self.data}"
+        return f"{self.materia} - {self.tipo} - {self.data} - *{self.voto}*"
 
 class Utente:
     def __init__(self, chat_id=0, nome=""):
@@ -152,10 +151,10 @@ class Utente:
         for row in table.find_all('tr'):
             col = row.find_all('td')
             try:
-                scritto = float(str(col[22].text).strip())
-                orale = float(str(col[25].text).strip())
-                pratico = float(str(col[28].text).strip())
-                grafico = float(str(col[31].text).strip())
+                scritto = str(col[22].text).strip()
+                orale = str(col[25].text).strip()
+                pratico = str(col[28].text).strip()
+                grafico = str(col[31].text).strip()
                 if scritto:
                     medie.append(Voto(scritto, col[0].text, "Scritto"))
                 if orale:

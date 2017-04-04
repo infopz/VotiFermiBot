@@ -44,8 +44,10 @@ def load_command(chat, message, shared, bot):
     if message.sender.username == 'infopz':
         load_data(shared)
         students = shared['user']
+        n = 0
         for student in students:
             print(f"Load {n}: {student.nome}")
+            n+=1
         chat.send(f"Dati Caricati - Utenti: {len(students)}")
     else:
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
@@ -173,7 +175,7 @@ def vote_command(chat, message, shared):
         if len(students[user_index].voti) == 0:
             msg = 'Non hai ancora nessun voto nel secondo quadrimestre'
         else:
-            msg = students[user_index].printvoti()
+            msg = students[user_index].voti_string()
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
             "text": msg,
@@ -210,7 +212,7 @@ def voti_materia(chat, message, shared):
                 if i.materia != mat:
                     msg += '\n'
                 mat = i.materia
-                msg += shorten_name(i.materia.upper()) + " - " + i.tipo + " - " + i.data + " - *" + i.v + '*\n'
+                msg += shorten_name(i.materia.upper()) + " - " + i.tipo + " - " + i.data + " - *" + i.voto + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
@@ -237,7 +239,7 @@ def medie_command(chat, message, shared):
             msg = "Non hai ancora nessun voto nel secondo quadrimestre"
         else:
             for i in m:
-                msg += shorten_name(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
+                msg += shorten_name(i.materia[1:]) + " - " + i.tipo + " - *" + i.voto + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
             "text": msg,
@@ -267,7 +269,7 @@ def voti_primo_quadrimestre(chat, message, shared):
             if voto.materia != materia:
                 msg += '\n'
             materia = voto.materia
-            msg += f"{shorten_name(voto.materia.upper())} - {voto.tipo} - {voto.data} - *{voto.v}*\n"
+            msg += f"{shorten_name(voto.materia.upper())} - {voto.tipo} - {voto.data} - *{voto.voto}*\n"
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
             "text": msg,
@@ -370,7 +372,7 @@ def check_updates(bot, shared):
                 print(f"NewVotesFound {student.nome} {len(new_voti)}")
                 msg = f"Ehi, {student.nome}, hai dei nuovi voti sul registro:\n"
                 for voto in new_voti:
-                    msg += f"Hai preso *{voto.v}* in {voto.materia} {voto.tipo}\n"
+                    msg += f"Hai preso *{voto.voto}* in {voto.materia} {voto.tipo}\n"
                 bot.chat(student.chat_id).send(msg)
         except Exception as e:
             print(f"Error NewVoti - User {student.nome} {e}")
