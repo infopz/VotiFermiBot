@@ -3,6 +3,7 @@ import requests
 from bs4 import BeautifulSoup
 from base64 import b64encode, b64decode
 from time import gmtime, strftime, sleep
+import traceback
 
 import apikey
 
@@ -40,6 +41,7 @@ class utente:
         s = requests.Session()
         # s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
         # r = s.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
+        shared['badReq'] = False
         try:
             ripeti = True
             while ripeti:
@@ -49,15 +51,18 @@ class utente:
                     ripeti=False
                 else:
                     if shared['badReq']:
-                        print("Bad Request - List Set to Empty")
+                        print("Bad Response - Caronte Fuck Two Times")
+                        logWrite('CARONTE FUCK TWO: USER '+self.nome+'\n' + r.text[-100:])
                         break
                     print("Retry Request - Caronte fuck")
+                    logWrite('CARONTE FUCK ONCE: USER '+self.nome+'\n'+ r.text[-100:])
                     shared['badReq'] = True
-                    sleep(600)
+                    sleep(60)
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table", {"class": "TabellaVoti"})
         except Exception:
             print("Error VoteUpdate - User " + self.nome)
+            logWrite('Error AggiornaVoti: USER '+self.nome+'\n'+traceback.format_exc())
             return
         if table == None:
             self.voti = list()
@@ -296,3 +301,14 @@ def sendTyping(chat_id):
         'action': 'typing'
     }
     a = requests.get('http://api.telegram.org/bot' + apikey.botKey + '/sendChatAction', params=payload)
+
+
+def logWrite(ty,e=''):
+    t = str(strftime("%d-%H:%M:%S", gmtime()))
+    m = ''
+    if e == '':
+        m = t+'    '+ty+'\n'
+    else:
+        m = t+'    '+ty+'\n'+e+'\n'
+    with open('log.txt', 'a') as f:
+        f.write(m)

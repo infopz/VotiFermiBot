@@ -5,6 +5,7 @@ from base64 import b64encode, b64decode
 from time import gmtime, strftime, sleep
 import requests
 import pickle
+import traceback
 
 from fileClassi import *
 import apikey
@@ -74,10 +75,12 @@ def changeCommand(chat, message, shared, args):
             })
             s[scU].aggiornavoti()
             s[scU].statusLogin = 0
+            logWrite('CHANGE COMMAND: USER '+s[scU].nome, 'Cambio effettuato')
         else:
             chat.send('Dati di login non corretti')
             chat.send('Immetti il tuo username')
             s[scU].statusLogin = 1
+            logWrite('CHANGE COMMAND: USER ' + s[scU].nome, 'Dati non corretti')
     shared['user'] = s
     saveDati(shared)
 
@@ -100,6 +103,7 @@ def delCommand(chat, message, shared, args):
         del s[i]
         shared['user'] = s
         saveDati(shared)
+        logWrite('USER DELETED', 'User '+str(i))
     else:
         s = shared['user']
         scu = shared['sCu']
@@ -133,6 +137,7 @@ def allCommand(chat, message, shared):
             print("Comunicazione inviata a " + str(i.nome))
         except Exception:
             print("Error with sending the comunication")
+            logWrite('COMUNICATION ERROR: USER '+str(i), traceback.format_exc())
 
 @bot.command('help')
 def helpCommand(chat, message):
@@ -155,7 +160,6 @@ def voteCommand(chat, message, shared):
                 "chat_id": s[scU].chat_id, "text": "Scusa se ci ho messo tanto ma il server del registro e' impallato", "parse_mode": "Markdown",
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-        shared['badReq'] = False
         msg = ''
         if len(s[scU].voti) == 0:
             msg = 'Non hai ancora nessun voto nel secondo quadrimestre'
@@ -173,6 +177,7 @@ def voteCommand(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " - " + str(e))
+        logWrite('VOTE COMMAND: USER:'+s[scU].nome, traceback.format_exc())
     shared['user'] = s
     saveDati(shared)
 
@@ -206,6 +211,7 @@ def votiMateria(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " -")
+        logWrite('MATERIE COMMAND: USER:'+s[scU].nome, traceback.format_exc())
 
 
 def medieCommand(chat, message, shared):
@@ -232,6 +238,7 @@ def medieCommand(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " - " + str(e))
+        logWrite('MEDIE COMMAND: USER:'+s[scU].nome, traceback.format_exc())
 
 
 def voti1q(chat, message, shared):
@@ -259,6 +266,7 @@ def voti1q(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " - " + str(e))
+        logWrite('1 QUAD COMMAND: USER:'+s[scU].nome, traceback.format_exc())
 
 
 def prDataAll(s):
@@ -277,6 +285,7 @@ def start1(chat, message, shared):
         s[scU].statusLogin = 2
         shared['user'] = s
         chat.send('Ora inserisci la password')
+        logWrite('START1: USER '+s[scU].nome)
     else:
         chat.send('Username non valido, riprova')
 
@@ -294,7 +303,6 @@ def start2(chat, message, shared):
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
             s[scU].aggiornavoti()
-            shared['badReq'] = False
             s[scU].statusLogin = 0
         else:
             chat.send('Dati di login non corretti')
@@ -331,6 +339,7 @@ def vediMod(bot, shared):
     else:
         print("Time " + str(h))
     utenti = shared['user']
+    logWrite("Timer Start")
     for i in range(0, len(utenti)):
         votivecchi = list()
         try:
@@ -339,7 +348,6 @@ def vediMod(bot, shared):
             if shared['badReq']:
                 bot.chat(20403805).send('Bad Request - Caronte Fuck')
                 continue
-            shared['badReq'] = False
             nuovivoti = seeDiff(votivecchi, utenti[i].voti)
             if len(nuovivoti) > 0:
                 print('NewVotesFound ' + utenti[i].nome+' '+str(len(nuovivoti)))
@@ -349,6 +357,7 @@ def vediMod(bot, shared):
                 bot.chat(utenti[i].chat_id).send(msg)
         except Exception as e:
             print("Error NewVoti - User " + str(utenti[i].nome)+ ' ' +str(e))
+            logWrite('TIMER ERROR: USER '+utenti[i].nome,traceback.format_exc())
         if i % 5 == 0 and i!=0: #per non sovraccaricare il server
             sleep(30)
         sleep(2)
@@ -356,6 +365,7 @@ def vediMod(bot, shared):
     u = shared['user']
     if not shared['firstTimer']:
         saveDati(shared)
+    logWrite("Timer End")
     shared['firstTimer'] = False
 
 @bot.timer(5)
@@ -391,6 +401,7 @@ def bef_proc(chat, message, shared):
                 print('NewUser: ' + nU.nome)
                 s.append(nU)
                 scU = len(s) - 1
+                logWrite('NEW USER '+nU.nome)
         shared['user'] = s
         shared['cUs'] = scU
         if s[scU].statusLogin == 1:
