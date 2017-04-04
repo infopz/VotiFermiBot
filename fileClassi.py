@@ -52,17 +52,17 @@ class utente:
                 else:
                     if shared['badReq']:
                         print("Bad Response - Caronte Fuck Two Times")
-                        logWrite('CARONTE FUCK TWO: USER '+self.nome+'\n' + r.text[-100:])
+                        log_write('CARONTE FUCK TWO: USER ' + self.nome + '\n' + r.text[-100:])
                         break
                     print("Retry Request - Caronte fuck")
-                    logWrite('CARONTE FUCK ONCE: USER '+self.nome+'\n'+ r.text[-100:])
+                    log_write('CARONTE FUCK ONCE: USER ' + self.nome + '\n' + r.text[-100:])
                     shared['badReq'] = True
                     sleep(60)
             soup = BeautifulSoup(r.text, "html.parser")
             table = soup.find("table", {"class": "TabellaVoti"})
         except Exception:
             print("Error VoteUpdate - User " + self.nome)
-            logWrite('Error AggiornaVoti: USER '+self.nome+'\n'+traceback.format_exc())
+            log_write('Error AggiornaVoti: USER ' + self.nome + '\n' + traceback.format_exc())
             return
         if table == None:
             self.voti = list()
@@ -269,7 +269,7 @@ def RiduciNome(m):  # per ora la lascio cosi, poi quando ho la sicurezza che sia
 }"""
 
 
-def seeDiff(a, b):  # algoritmo per cercare nuovi voti
+def voti_diff(a, b):  # algoritmo per cercare nuovi voti
     nv = list()
     ai = 0
     swap = False
@@ -295,7 +295,7 @@ def seeDiff(a, b):  # algoritmo per cercare nuovi voti
     return nv
 
 
-def sendTyping(chat_id):
+def set_typing(chat_id):
     payload = {
         'chat_id': chat_id,
         'action': 'typing'
@@ -303,7 +303,7 @@ def sendTyping(chat_id):
     a = requests.get('http://api.telegram.org/bot' + apikey.botKey + '/sendChatAction', params=payload)
 
 
-def logWrite(ty,e=''):
+def log_write(ty, e=''):
     t = str(strftime("%d-%H:%M:%S", gmtime()))
     m = ''
     if e == '':
