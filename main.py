@@ -6,6 +6,8 @@ from time import gmtime, strftime, sleep
 import requests
 import pickle
 import traceback
+from raven import Client
+
 
 from fileClassi import *
 import apikey
@@ -15,6 +17,7 @@ import apikey
 
 bot = botogram.create(apikey.botKey)
 
+client = Client('https://f670552704a44ad19fb1f6b2c57cfa56:4b2bd356bbbb47dabd912b5a81d5042f@sentry.io/154978')
 
 @bot.command('start')
 def startcomm(chat, message, shared):
@@ -137,7 +140,7 @@ def allCommand(chat, message, shared):
             print("Comunicazione inviata a " + str(i.nome))
         except Exception:
             print("Error with sending the comunication")
-            logWrite('COMUNICATION ERROR: USER '+str(i), traceback.format_exc())
+            client.captureException()
 
 @bot.command('help')
 def helpCommand(chat, message):
@@ -177,7 +180,7 @@ def voteCommand(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " - " + str(e))
-        logWrite('VOTE COMMAND: USER:'+s[scU].nome, traceback.format_exc())
+        client.captureException()
     shared['user'] = s
     saveDati(shared)
 
@@ -211,7 +214,7 @@ def votiMateria(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " -")
-        logWrite('MATERIE COMMAND: USER:'+s[scU].nome, traceback.format_exc())
+        client.captureException()
 
 
 def medieCommand(chat, message, shared):
@@ -238,7 +241,7 @@ def medieCommand(chat, message, shared):
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
         })
         print("Error voteCommand - User " + s[scU].nome + " - " + str(e))
-        logWrite('MEDIE COMMAND: USER:'+s[scU].nome, traceback.format_exc())
+        client.captureException()
 
 
 def voti1q(chat, message, shared):
