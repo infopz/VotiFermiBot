@@ -7,7 +7,7 @@ import requests
 import pickle
 import traceback
 
-from fileClassi import *
+from class_file import *
 import apikey
 
 
@@ -20,7 +20,7 @@ bot = botogram.create(apikey.botKey)
 def start_command(chat, message, shared):
     students = shared['user']
     user_index = shared['cUs']
-    if students[user_index].checklogin():
+    if students[user_index].check_login():
         msg = 'Ciao, ' + students[user_index].nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
@@ -66,16 +66,16 @@ def change_command(chat, message, shared, args):
         msg = args[0] + 'aaaa'
         # FIXME: ti prego togli sta cosa
         us = b64encode(msg.encode('ascii')).decode('ascii')  # "cripto" il nome utente non appena viene immessa
-        students[user_index].setuser(us)
+        students[user_index].set_user(us)
         pw = b64encode(args[1].encode('ascii')).decode('ascii')  # "cripto" la password non appena viene immessa
-        students[user_index].setpass(pw)
-        if students[user_index].checklogin():
+        students[user_index].set_pass(pw)
+        if students[user_index].check_login():
             bot.api.call("sendMessage", {
                 "chat_id": students[user_index].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!',
                 "parse_mode": "Markdown",
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-            students[user_index].aggiornavoti()
+            students[user_index].update_voti()
             students[user_index].statusLogin = 0
             log_write('CHANGE COMMAND: USER ' + students[user_index].nome, 'Cambio effettuato')
         else:
@@ -162,7 +162,7 @@ def vote_command(chat, message, shared):
     user_index = shared['cUs']
     set_typing(students[user_index].chat_id)
     try:
-        students[user_index].aggiornavoti(shared)
+        students[user_index].update_voti(shared)
         if shared['badReq']:
             bot.api.call("sendMessage", {
                 "chat_id": students[user_index].chat_id,
@@ -200,7 +200,7 @@ def voti_materia(chat, message, shared):
     user_index = shared['cUs']
     set_typing(students[user_index].chat_id)
     try:
-        voti = students[user_index].votipermateria()
+        voti = students[user_index].voti_per_materia()
         if len(voti) == 0:
             msg = 'Non hai ancora nessun voto nel secondo quadrimestre'
         else:
@@ -210,7 +210,7 @@ def voti_materia(chat, message, shared):
                 if i.materia != mat:
                     msg += '\n'
                 mat = i.materia
-                msg += RiduciNome(i.materia.upper()) + " - " + i.tipo + " - "+ i.data +" - *" + i.v + '*\n'
+                msg += shorten_name(i.materia.upper()) + " - " + i.tipo + " - " + i.data + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id, "text": msg, "parse_mode": "Markdown",
             "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
@@ -231,13 +231,13 @@ def medie_command(chat, message, shared):
     user_index = shared['cUs']
     set_typing(students[user_index].chat_id)
     try:
-        m = students[user_index].findmedie()
+        m = students[user_index].find_averages()
         msg = str()
         if len(m) == 0:
             msg = "Non hai ancora nessun voto nel secondo quadrimestre"
         else:
             for i in m:
-                msg += RiduciNome(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
+                msg += shorten_name(i.materia[1:]) + " - " + i.tipo + " - *" + i.v + '*\n'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
             "text": msg,
@@ -260,14 +260,14 @@ def voti_primo_quadrimestre(chat, message, shared):
     user_index = shared['cUs']
     try:
         set_typing(students[user_index].chat_id)
-        voti = students[user_index].voti1q()
+        voti = students[user_index].voti_primo_quadrimestre()
         msg = "Ecco i tuoi voti del primo quadrimestre\n"
         materia = ''
         for voto in voti:
             if voto.materia != materia:
                 msg += '\n'
             materia = voto.materia
-            msg += f"{RiduciNome(voto.materia.upper())} - {voto.tipo} - {voto.data} - *{voto.v}*\n"
+            msg += f"{shorten_name(voto.materia.upper())} - {voto.tipo} - {voto.data} - *{voto.v}*\n"
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
             "text": msg,
@@ -299,7 +299,7 @@ def start1(chat, message, shared):
     if msg.isalnum():
         # FIXME: pls
         username = b64encode(msg.encode('ascii')).decode('ascii')
-        students[user_index].setuser(username)
+        students[user_index].set_user(username)
         students[user_index].statusLogin = 2
         shared['user'] = students
         chat.send('Ora inserisci la password')
@@ -314,14 +314,14 @@ def start2(chat, message, shared):
     if message.text.isprintable():
         # FIXME: dai
         password = b64encode(message.text.encode('ascii')).decode('ascii')
-        students[user_index].setpass(password)
-        if students[user_index].checklogin():
+        students[user_index].set_pass(password)
+        if students[user_index].check_login():
             bot.api.call("sendMessage", {
                 "chat_id": students[user_index].chat_id, "text": 'Dati di login corretti, puoi iniziare ad usare il bot!',
                 "parse_mode": "Markdown",
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-            students[user_index].aggiornavoti()
+            students[user_index].update_voti()
             students[user_index].statusLogin = 0
         else:
             chat.send('Dati di login non corretti')
@@ -361,7 +361,7 @@ def check_updates(bot, shared):
     for i, student in enumerate(students):
         try:
             old_voti = student.voti
-            student.aggiornavoti(shared)
+            student.update_voti(shared)
             if shared['badReq']:
                 bot.chat(20403805).send('Salve Smilzo, Caronte ha risposto con 400 Bad Request')
                 continue
@@ -410,7 +410,7 @@ def before_processing(chat, message, shared):
                     user_index = student
                     break
             else:
-                new_user = utente(chat.id, name)
+                new_user = Utente(chat.id, name)
                 print('NewUser: ' + new_user.nome)
                 students.append(new_user)
                 user_index = len(students) - 1
