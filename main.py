@@ -44,8 +44,8 @@ def load_command(chat, message, shared, bot):
     if message.sender.username == 'infopz':
         load_data(shared)
         students = shared['user']
-        for i, studente in enumerate(students):
-            print(f"Load {n}: {studente.nome}")
+        for student in students:
+            print(f"Load {n}: {student.nome}")
         chat.send(f"Dati Caricati - Utenti: {len(students)}")
     else:
         chat.send("Solo @infopz e' autorizzato ad eseguire questo comando")
@@ -405,8 +405,8 @@ def before_processing(chat, message, shared):
     if message.text != '/load':
         if chat.id != students[user_index].chat_id:
             # inserimento nuovo current user
-            for i, student in enumerate(students):
-                if chat.id == students[student].chat_id:
+            for student in students:
+                if chat.id == student.chat_id:
                     user_index = student
                     break
             else:
