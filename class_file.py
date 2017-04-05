@@ -14,7 +14,7 @@ class Voto:
         self.data = data.replace('-', '/')
 
     def __eq__(self, other):
-        return self.voto == other.v and self.materia == other.materia
+        return self.voto == other.voto and self.materia == other.materia
 
     def __repr__(self):
         return f"Voto(voto={self.voto}, materia={self.materia}, tipo={self.tipo}, data={self.data})"
