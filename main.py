@@ -101,14 +101,16 @@ def timer_command(chat, message, shared, bot):
 def del_command(chat, message, shared, args):
     if message.sender.username == 'infopz':
         students = shared['user']
-        # FIXME: se uno manda una stringa va in eccezione qui
-        user_id = int(args[0])
-        print(f"User {user_id} {students[user_id].nome} deleted")
-        chat.send(f"User {user_id} {students[user_id].nome} deleted")
-        del students[user_id]
-        shared['user'] = students
-        save_data(shared)
-        log_write('USER DELETED', f'User {user_id}')
+        if args[0].isdigit():
+            user_id = int(args[0])
+            print(f"User {user_id} {students[user_id].nome} deleted")
+            chat.send(f"User {user_id} {students[user_id].nome} deleted")
+            del students[user_id]
+            shared['user'] = students
+            save_data(shared)
+            log_write('USER DELETED', f'User {user_id}')
+        else:
+            chat.send('Ehi, coglione, devi mandarmi un numero, non una stringa\nSacripante!')
     else:
         students = shared['user']
         user_index = shared['sCu']
@@ -144,10 +146,8 @@ def all_command(chat, message, shared):
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
             print("Comunicazione inviata a " + str(i.nome))
-        # FIXME: se è un communication error non catturare tutte le exception
         except Exception:
             print("Error with sending the comunication")
-            log_write('COMUNICATION ERROR: USER ' + str(i), traceback.format_exc())
 
 @bot.command('help')
 def help_command(chat, message):
@@ -323,7 +323,7 @@ def start2(chat, message, shared):
                 "parse_mode": "Markdown",
                 "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
             })
-            students[user_index].update_voti()
+            students[user_index].update_voti(shared)
             students[user_index].statusLogin = 0
         else:
             chat.send('Dati di login non corretti')
@@ -377,7 +377,7 @@ def check_updates(bot, shared):
         except Exception as e:
             print(f"Error NewVoti - User {student.nome} {e}")
             log_write('TIMER ERROR: USER ' + student.nome, traceback.format_exc())
-        if i % 5 == 4: # per non sovraccaricare il server (Steffo: tanto si sovraccarica comunque... se solo fosse fatto decentemente come sito)
+        if i % 5 == 4: # per non sovraccaricare il server
             sleep(30)
         sleep(2)
     shared['user'] = students
@@ -386,6 +386,14 @@ def check_updates(bot, shared):
     log_write("Timer End")
     shared['firstTimer'] = False
 
+@bot.timer(300)
+def reset_blocked(shared):
+    b = shared['lock']
+    if b:
+        print(f'User {str(b)} Unlocked')
+    b = list()
+    shared['lock'] = b
+
 @bot.timer(5)
 def reset_control_number(shared):
     shared['maxMess']=0
@@ -393,6 +401,9 @@ def reset_control_number(shared):
 
 @bot.before_processing
 def before_processing(chat, message, shared):
+    b = shared['lock']
+    if chat.id in b:
+        return True
     if message.sender.username is not None:
         name = message.sender.username
     else:
@@ -402,8 +413,13 @@ def before_processing(chat, message, shared):
     user_index = shared['cUs']
     shared['maxMess'] += 1
     if shared['maxMess'] > 4:
-        print('Error - Too Many Messages')
-        return
+        chat.send('Hai mandato troppi messaggi, sei stato bloccato per un po di tempo')
+        b = shared['lock']
+        b.append(chat.id)
+        shared['lock'] = b
+        print(f'Too Many Messages - User {name} Blocked')
+        shared['maxMess'] = 0
+        return True
     if message.text != '/load':
         if chat.id != students[user_index].chat_id:
             # inserimento nuovo current user
@@ -439,7 +455,8 @@ def prepare_memory(shared):
     shared['cUs'] = 0
     shared['user'] = list()
     shared['maxMess'] = 0
-    shared['badReq'] = False
+    shared['badReq'] = list()
+    shared['lock'] = list()
 
 
 if __name__ == "__main__":

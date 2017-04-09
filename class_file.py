@@ -54,12 +54,14 @@ class Utente:
                 session.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/elabora_PasswordStudenti.php', data=payload)
                 response = session.post('http://www.fermi.mo.it/~loar/AssenzeVotiStudenti/VotiDataOrdinati2Q.php')
                 if len(response.text) != 11610:
+                    shared['badReq'] = False
                     break
                 else:
                     if shared['badReq']:
                         print("Bad Response - Caronte Fuck Two Times")
                         log_write('CARONTE FUCK TWO: USER ' + self.nome + '\n' + response.text[-100:])
-                        break
+                        sleep(60)
+                        return
                     print("Retry Request - Caronte fuck")
                     log_write('CARONTE FUCK ONCE: USER ' + self.nome + '\n' + response.text[-100:])
                     shared['badReq'] = True
