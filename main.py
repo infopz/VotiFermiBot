@@ -20,7 +20,7 @@ bot = botogram.create(apikey.botKey)
 def start_command(chat, message, shared):
     students = shared['user']
     user_index = shared['cUs']
-    if students[user_index].check_login():
+    if students[user_index].password != '' and students[user_index].check_login():
         msg = 'Ciao, ' + students[user_index].nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
@@ -360,12 +360,13 @@ def check_updates(bot, shared):
     print("Time " + str(hour))
     students = shared['user']
     log_write("Timer Start")
+    number_badRes = 0
     for i, student in enumerate(students):
         try:
             old_voti = student.voti
             student.update_voti(shared)
             if shared['badReq']:
-                bot.chat(20403805).send('Salve Smilzo, Caronte ha risposto con 400 Bad Request')
+                number_badRes += 1
                 continue
             new_voti = voti_diff(old_voti, student.voti)
             if len(new_voti) > 0:
@@ -380,6 +381,8 @@ def check_updates(bot, shared):
         if i % 5 == 4: # per non sovraccaricare il server
             sleep(30)
         sleep(2)
+    if number_badRes != 0:
+        bot.chat(20403805).send(f'Salve Smilzo, {str(number_badRes)} Bad Response da caronte')
     shared['user'] = students
     if not shared['firstTimer']:
         save_data(shared)
@@ -422,17 +425,18 @@ def before_processing(chat, message, shared):
         return True
     if message.text != '/load':
         if chat.id != students[user_index].chat_id:
-            # inserimento nuovo current user
             for student in range(0, len(students)):
                 if chat.id == students[i].chat_id:
                     user_index = i
                     break
-            else:
+            else: # inserimento nuovo current user
                 new_user = Utente(chat.id, name)
                 print('NewUser: ' + new_user.nome)
                 students.append(new_user)
                 user_index = len(students) - 1
                 log_write('NEW USER ' + new_user.nome)
+                if message.text != '/start': #nuovo user che scrive un messaggio alla cazzo, lo rimanda a start
+                    start_command(chat, message, shared)
         shared['user'] = students
         shared['cUs'] = user_index
         if students[user_index].statusLogin == 1:
@@ -457,6 +461,7 @@ def prepare_memory(shared):
     shared['maxMess'] = 0
     shared['badReq'] = list()
     shared['lock'] = list()
+    shared['reverseTimer'] = False
 
 
 if __name__ == "__main__":
