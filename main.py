@@ -46,7 +46,7 @@ def load_command(chat, message, shared, bot):
         students = shared['user']
         n = 0
         for student in students:
-            print(f"Load {n}: {student.nome}")
+            print(f"Load {n}: {student.nome} - {student.chat_id}")
             n+=1
         chat.send(f"Dati Caricati - Utenti: {len(students)}")
     else:
@@ -350,13 +350,22 @@ def load_data(shared):
     shared['user'] = s
     print("LoadDati")
 
+def sendManyFucks(bot, chat_id):
+    bot.api.call("sendMessage", {
+        "chat_id": chat_id, "text": 'Ciao,\n ho notato che con i dati da te immessi, il registro mi dice tutte le volte che sono sbagliati.\nNel caso tu abbia cambiato la password, utilizza il comando /change per cambiare anche quella memorizzata dal bot, in caso contrario, non preoccuparti, sara uno strano suo errore.\nSe ti dovesse arrivare anche domani questo avviso, contatta @infopz che risolvera il problema',
+        "parse_mode": "Markdown",
+        "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+    })
 
 @bot.timer(7200) #FIXME la lista copiata
 def check_updates(bot, shared):
+    badLogin = shared['badLogin']
     hour = int(strftime("%H", gmtime())) + 1
     if hour >= 20 or hour <= 5:
         print(f"NO Time {hour}")
         return
+    if hour <= 9:
+        badLogin = dict() #reset al mattino
     print("Time " + str(hour))
     students = shared['user']
     if shared['reverseTimer']: # reverso la lista cosi caronte non mi risponde sempre su quei 5 utenti
@@ -368,6 +377,10 @@ def check_updates(bot, shared):
             old_voti = student.voti
             student.update_voti(shared)
             if shared['badReq']:
+                if student.chat_id in badLogin: #registro a quali utenti da CaronteFuck
+                    badLogin[student.chat_id] += 1
+                else:
+                    badLogin[student.chat_id] = 1
                 number_badRes += 1
                 continue
             new_voti = voti_diff(old_voti, student.voti)
@@ -388,11 +401,18 @@ def check_updates(bot, shared):
     if shared['reverseTimer']:
         students.reverse()
     shared['reverseTimer'] = not shared['reverseTimer']
+    if hour >= 18: #controllo all'ultimo timer
+        for i in badLogin:
+            if badLogin[i]>=5:
+                sendManyFucks(i)
+            print(f'ManyFuck sent to {i}')
+            log_write(f'MANYFUCKS SENT TO {i}')
     shared['user'] = students
     if not shared['firstTimer']:
         save_data(shared)
     log_write("Timer End")
     shared['firstTimer'] = False
+    shared['badLogin'] = badLogin
 
 @bot.timer(300)
 def reset_blocked(shared):
@@ -467,6 +487,7 @@ def prepare_memory(shared):
     shared['badReq'] = list()
     shared['lock'] = list()
     shared['reverseTimer'] = False
+    shared['badLogin']=dict()
 
 
 if __name__ == "__main__":
