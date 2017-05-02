@@ -21,7 +21,7 @@ def start_command(chat, message, shared):
     students = shared['user']
     user_index = shared['cUs']
     if students[user_index].password != '' and students[user_index].check_login():
-        msg = 'Ciao, ' + students[user_index].nome + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
+        msg = 'Ciao, ' + students[user_index].nome.replace('_', '\_') + ', avevi gia inserito i tuoi dati e sono stati caricati! Inizia a usare il bot!'
         bot.api.call("sendMessage", {
             "chat_id": students[user_index].chat_id,
             "text": msg,
@@ -32,7 +32,7 @@ def start_command(chat, message, shared):
     else:
         chat.send(
             "Benvenuto " + students[
-                user_index].nome + "\nDa ora in poi quando troverò un nuovo voto sul registro ti invierò un messaggio\n\nSe il login dovesse fallire ridai il comando /start\n\nI tuoi dati sono al sicuro! Username e Password vengono criptati appena li inserisci\n\nNel caso qualche materia non venisse abbreviata contattami\n\nBot progettato da Giovanni Casari (@infopz)")
+                user_index].nome.replace('_', '\_') + "\nDa ora in poi quando troverò un nuovo voto sul registro ti invierò un messaggio\n\nSe il login dovesse fallire ridai il comando /start\n\nI tuoi dati sono al sicuro! Username e Password vengono criptati appena li inserisci\n\nNel caso qualche materia non venisse abbreviata contattami\n\nBot progettato da Giovanni Casari (@infopz)")
         chat.send("Inserisci il tuo username del registro:")
         students[user_index].statusLogin = 1
     shared['user'] = students
@@ -104,7 +104,7 @@ def del_command(chat, message, shared, args):
         if args[0].isdigit():
             user_id = int(args[0])
             print(f"User {user_id} {students[user_id].nome} deleted")
-            chat.send(f"User {user_id} {students[user_id].nome} deleted")
+            chat.send("User "+user_id+" "+students[user_id].nome.replace('_', '\_')+" deleted")
             del students[user_id]
             shared['user'] = students
             save_data(shared)
@@ -157,7 +157,12 @@ def help_command(chat, message):
         "  /help - Visualizza questo messaggio\n" \
         "\n" \
         "Per qualsiasi informazione o problema contatta @infopz"
-    chat.send(m)
+    bot.api.call("sendMessage", {
+        "chat_id": chat.chat_id,
+        "text": m,
+        "parse_mode": "Markdown",
+        "reply_markup": '{"keyboard": [[{"text": "Voti per materia"}, {"text":"Voti per data"}], [{"text": "Medie"}, {"text": "Voti 1°Quad"}]], "one_time_keyboard": false, "resize_keyboard": true}'
+    })
 
 def vote_command(chat, message, shared):
     students = shared['user']
@@ -289,11 +294,6 @@ def voti_primo_quadrimestre(chat, message, shared):
         log_write(f"1 QUAD COMMAND: USER: {students[user_index].nome}", traceback.format_exc())
 
 
-def print_all_data(students):
-    for student in students:
-        print(f"n:{student.nome} id: {student.chat_id} u: {student.userF} p:{student.passF} {student.statusLogin}")
-
-
 def start1(chat, message, shared):
     students = shared['user']
     user_index = shared['cUs']
@@ -351,7 +351,7 @@ def load_data(shared):
     print("LoadDati")
 
 
-@bot.timer(7200)
+@bot.timer(7200) #FIXME la lista copiata
 def check_updates(bot, shared):
     hour = int(strftime("%H", gmtime())) + 1
     if hour >= 20 or hour <= 5:
@@ -359,7 +359,9 @@ def check_updates(bot, shared):
         return
     print("Time " + str(hour))
     students = shared['user']
-    log_write("Timer Start")
+    if shared['reverseTimer']: # reverso la lista cosi caronte non mi risponde sempre su quei 5 utenti
+        students.reverse()
+    log_write(f"Timer Start {str(shared['reverseTimer'])}")
     number_badRes = 0
     for i, student in enumerate(students):
         try:
@@ -371,7 +373,7 @@ def check_updates(bot, shared):
             new_voti = voti_diff(old_voti, student.voti)
             if len(new_voti) > 0:
                 print(f"NewVotesFound {student.nome} {len(new_voti)}")
-                msg = f"Ehi, {student.nome}, hai dei nuovi voti sul registro:\n"
+                msg = "Ehi, "+student.nome.replace('_', '\_')+", hai dei nuovi voti sul registro:\n"
                 for voto in new_voti:
                     msg += f"Hai preso *{voto.voto}* in {voto.materia} {voto.tipo}\n"
                 bot.chat(student.chat_id).send(msg)
@@ -383,6 +385,9 @@ def check_updates(bot, shared):
         sleep(2)
     if number_badRes != 0:
         bot.chat(20403805).send(f'Salve Smilzo, {str(number_badRes)} Bad Response da caronte')
+    if shared['reverseTimer']:
+        students.reverse()
+    shared['reverseTimer'] = not shared['reverseTimer']
     shared['user'] = students
     if not shared['firstTimer']:
         save_data(shared)
@@ -426,8 +431,8 @@ def before_processing(chat, message, shared):
     if message.text != '/load':
         if chat.id != students[user_index].chat_id:
             for student in range(0, len(students)):
-                if chat.id == students[i].chat_id:
-                    user_index = i
+                if chat.id == students[student].chat_id:
+                    user_index = student
                     break
             else: # inserimento nuovo current user
                 new_user = Utente(chat.id, name)
