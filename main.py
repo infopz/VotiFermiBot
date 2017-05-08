@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+ #!/usr/bin/python3
 import botogram
 from bs4 import BeautifulSoup
 from base64 import b64encode, b64decode
@@ -14,7 +14,7 @@ import apikey
 # bot.api.call("sendMessage", {"chat_id": chat.id, "text": 'Testo Del messaggio', "parse_mode": "HTML", "reply_markup": '{"keyboard": [["text": "Testo"]], "one_time_keyboard": false, "resize_keyboard": true}'})
 
 bot = botogram.create(apikey.botKey)
-
+bot.process_backlog = True
 
 @bot.command('start')
 def start_command(chat, message, shared):
@@ -404,9 +404,15 @@ def check_updates(bot, shared):
     if hour >= 18: #controllo all'ultimo timer
         for i in badLogin:
             if badLogin[i]>=5:
-                sendManyFucks(i)
-            print(f'ManyFuck sent to {i}')
-            log_write(f'MANYFUCKS SENT TO {i}')
+                sendManyFucks(bot, i)
+            for j in students: #stampa il nome dell'user
+                if i == j.chat_id:
+                    print(f'ManyFuck sent to {j.nome}')
+                    log_write(f'MANYFUCKS SENT TO {j.nome}')
+                    break
+            else:
+                print(f'ManyFuck sent to {i}')
+                log_write(f'MANYFUCKS SENT TO {i}')
     shared['user'] = students
     if not shared['firstTimer']:
         save_data(shared)
@@ -488,6 +494,8 @@ def prepare_memory(shared):
     shared['lock'] = list()
     shared['reverseTimer'] = False
     shared['badLogin']=dict()
+    load_data(shared)
+    print("User Loaded")
 
 
 if __name__ == "__main__":
